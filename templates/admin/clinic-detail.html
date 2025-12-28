@@ -1,0 +1,321 @@
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/clinics">Клиники</a></li>
+                    <li class="breadcrumb-item active">{{.clinic.ClinicName}}</li>
+                </ol>
+            </nav>
+            <h1 class="mb-0">{{.clinic.ClinicName}}</h1>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Info -->
+        <div class="col-lg-8">
+            <!-- General Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Общая информация
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="small text-muted">Название</label>
+                            <div><strong>{{.clinic.ClinicName}}</strong></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Лицензия</label>
+                            <div><strong>{{.clinic.LicenseNumber}}</strong></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Регион</label>
+                            <div>{{.clinic.Region.Name}}, {{.clinic.Region.City}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Год основания</label>
+                            <div>{{.clinic.YearEstablished}}</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="small text-muted">Адрес</label>
+                            <div>{{.clinic.Address}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Email</label>
+                            <div>{{.clinic.User.Email}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Телефон</label>
+                            <div>{{.clinic.User.Phone}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Рейтинг</label>
+                            <div>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <strong>{{.clinic.Rating}}</strong>
+                                <small class="text-muted">({{.clinic.ReviewCount}} отзывов)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Статус</label>
+                            <div>
+                                {{if .clinic.User.IsActive}}
+                                    <span class="badge bg-success">Активна</span>
+                                {{else}}
+                                    <span class="badge bg-secondary">Неактивна</span>
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specializations -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-heart-pulse"></i> Специализации
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{if .clinic.Specializations}}
+                        {{range .clinic.Specializations}}
+                            <span class="badge bg-info me-2 mb-2">{{.Name}}</span>
+                        {{end}}
+                    {{else}}
+                        <p class="text-muted mb-0">Специализации не указаны</p>
+                    {{end}}
+                </div>
+            </div>
+
+            <!-- Doctors -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-badge"></i> Врачи ({{len .clinic.Doctors}})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{if .clinic.Doctors}}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ФИО</th>
+                                        <th>Специализация</th>
+                                        <th>Опыт</th>
+                                        <th>Лицензия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .clinic.Doctors}}
+                                    <tr>
+                                        <td><strong>{{.FullName}}</strong></td>
+                                        <td>{{.Specialization.Name}}</td>
+                                        <td>{{.YearsOfExperience}} лет</td>
+                                        <td>{{.LicenseNumber}}</td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    {{else}}
+                        <p class="text-muted mb-0">Врачи не добавлены</p>
+                    {{end}}
+                </div>
+            </div>
+
+            <!-- Price List -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tag"></i> Прайс-лист
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{if .clinic.PriceLists}}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Процедура</th>
+                                        <th>Специализация</th>
+                                        <th class="text-end">Цена</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .clinic.PriceLists}}
+                                    <tr>
+                                        <td>{{.ProcedureName}}</td>
+                                        <td>
+                                            <small>{{.Specialization.Name}}</small>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>{{formatCurrency .Price}}</strong>
+                                        </td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    {{else}}
+                        <p class="text-muted mb-0">Прайс-лист не заполнен</p>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear"></i> Действия
+                    </h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <button class="btn btn-outline-warning" onclick="toggleClinicStatus({{.clinic.ID}}, {{.clinic.User.IsActive}})">
+                        <i class="bi bi-{{if .clinic.User.IsActive}}lock{{else}}unlock{{end}}"></i>
+                        {{if .clinic.User.IsActive}}Деактивировать{{else}}Активировать{{end}}
+                    </button>
+                    <button class="btn btn-outline-info" onclick="viewStatistics()">
+                        <i class="bi bi-graph-up"></i> Статистика
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="sendNotification()">
+                        <i class="bi bi-envelope"></i> Отправить уведомление
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart"></i> Статистика
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Предложений отправлено</small>
+                        <h4 id="totalOffers">-</h4>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Предложений принято</small>
+                        <h4 id="acceptedOffers">-</h4>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Конверсия</small>
+                        <h4 id="conversionRate">-</h4>
+                    </div>
+                    <div class="mb-0">
+                        <small class="text-muted">Дата регистрации</small>
+                        <div><strong>{{formatDate .clinic.User.CreatedAt}}</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Последняя активность
+                    </h6>
+                </div>
+                <div class="card-body" id="recentActivity">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+async function toggleClinicStatus(clinicId, currentStatus) {
+    const action = currentStatus ? 'деактивировать' : 'активировать';
+    if (!confirm(`Вы уверены, что хотите ${action} эту клинику?`)) return;
+    
+    try {
+        showLoading();
+        await API.patch(`/admin/users/${clinicId}/toggle-status`, {});
+        hideLoading();
+        
+        showToast(`Клиника ${action === 'деактивировать' ? 'деактивирована' : 'активирована'}`, 'success');
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка изменения статуса', 'danger');
+    }
+}
+
+function viewStatistics() {
+    showToast('Детальная статистика в разработке', 'info');
+}
+
+function sendNotification() {
+    showToast('Функция отправки уведомлений в разработке', 'info');
+}
+
+async function loadClinicStats() {
+    // Load clinic statistics
+    // In real app would call API
+    document.getElementById('totalOffers').textContent = '24';
+    document.getElementById('acceptedOffers').textContent = '15';
+    document.getElementById('conversionRate').textContent = '62.5%';
+}
+
+async function loadRecentActivity() {
+    const html = `
+        <div class="small mb-2">
+            <i class="bi bi-circle-fill text-success" style="font-size: 6px;"></i>
+            <span class="ms-2">Предложение отправлено</span>
+            <div class="text-muted ms-3">2 часа назад</div>
+        </div>
+        <div class="small mb-2">
+            <i class="bi bi-circle-fill text-info" style="font-size: 6px;"></i>
+            <span class="ms-2">Консультация назначена</span>
+            <div class="text-muted ms-3">5 часов назад</div>
+        </div>
+        <div class="small mb-2">
+            <i class="bi bi-circle-fill text-primary" style="font-size: 6px;"></i>
+            <span class="ms-2">Обновлен прайс-лист</span>
+            <div class="text-muted ms-3">1 день назад</div>
+        </div>
+    `;
+    document.getElementById('recentActivity').innerHTML = html;
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadClinicStats();
+    loadRecentActivity();
+});
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

@@ -1,0 +1,368 @@
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-building"></i> Обзор клиник
+            </h1>
+            <p class="text-muted">Полный обзор работы стоматологических клиник</p>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Всего клиник</h6>
+                    <h3>48</h3>
+                    <small class="text-success"><i class="bi bi-arrow-up"></i> +5 за месяц</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Активных клиник</h6>
+                    <h3 class="text-success">42</h3>
+                    <small class="text-muted">87.5% от общего числа</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Средняя загруженность</h6>
+                    <h3 class="text-primary">68%</h3>
+                    <small class="text-muted">Оптимальный уровень</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Средний рейтинг</h6>
+                    <h3 class="text-warning">4.3</h3>
+                    <small class="text-muted">На основе 2,145 отзывов</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="regionFilter">
+                        <option value="">Все регионы</option>
+                        <option value="1">Центральный</option>
+                        <option value="2">Заднепровский</option>
+                        <option value="3">Промышленный</option>
+                        <option value="4">Ленинский</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="specializationFilter">
+                        <option value="">Все специализации</option>
+                        <option value="therapy">Терапия</option>
+                        <option value="orthopedics">Ортопедия</option>
+                        <option value="surgery">Хирургия</option>
+                        <option value="orthodontics">Ортодонтия</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="ratingFilter">
+                        <option value="">Любой рейтинг</option>
+                        <option value="4.5">4.5+ звезд</option>
+                        <option value="4.0">4.0+ звезд</option>
+                        <option value="3.5">3.5+ звезд</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="bi bi-funnel"></i> Применить
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="exportData()">
+                        <i class="bi bi-download"></i> Экспорт
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Chart -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Динамика работы клиник</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Топ клиник по рейтингу</h5>
+                </div>
+                <div class="card-body" id="topClinics">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clinics Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Полный список клиник</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Название</th>
+                            <th>Регион</th>
+                            <th class="text-center">Рейтинг</th>
+                            <th class="text-center">Пациентов</th>
+                            <th class="text-center">Планов</th>
+                            <th class="text-center">Конверсия</th>
+                            <th class="text-center">Жалоб</th>
+                            <th class="text-center">Статус</th>
+                            <th class="text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clinicsTable">
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item disabled">
+                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+            </li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<!-- Clinic Details Modal -->
+<div class="modal fade" id="clinicDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Детали клиники</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="clinicDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+async function loadClinicsData() {
+    loadPerformanceChart();
+    loadTopClinics();
+    loadClinicsTable();
+}
+
+function loadPerformanceChart() {
+    const ctx = document.getElementById('performanceChart');
+    
+    const data = {
+        labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+        datasets: [
+            {
+                label: 'Обработано планов',
+                data: [320, 345, 380, 365, 410, 435, 465, 490, 475, 520, 545, 575],
+                borderColor: 'rgba(13, 110, 253, 1)',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Завершено лечений',
+                data: [245, 265, 290, 280, 315, 335, 358, 378, 365, 400, 420, 445],
+                borderColor: 'rgba(25, 135, 84, 1)',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4
+            }
+        ]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadTopClinics() {
+    const topClinics = [
+        { name: 'Стоматология "Улыбка"', rating: 4.8, reviews: 342 },
+        { name: 'ДентаЛюкс', rating: 4.7, reviews: 289 },
+        { name: 'Здоровые зубы', rating: 4.6, reviews: 256 },
+        { name: 'Семейная стоматология', rating: 4.5, reviews: 234 },
+        { name: 'ДентаМед', rating: 4.5, reviews: 198 }
+    ];
+    
+    const html = topClinics.map((clinic, index) => `
+        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+            <div class="me-3">
+                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" 
+                     style="width: 35px; height: 35px;">
+                    <strong>${index + 1}</strong>
+                </div>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="mb-1">${clinic.name}</h6>
+                <div>
+                    <i class="bi bi-star-fill text-warning"></i>
+                    <strong>${clinic.rating}</strong>
+                    <small class="text-muted">(${clinic.reviews})</small>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('topClinics').innerHTML = html;
+}
+
+function loadClinicsTable() {
+    const clinics = [
+        { name: 'Стоматология "Улыбка"', region: 'Центральный', rating: 4.8, patients: 145, plans: 98, conversion: 72, complaints: 1, active: true },
+        { name: 'ДентаЛюкс', region: 'Заднепровский', rating: 4.7, patients: 132, plans: 89, conversion: 68, complaints: 2, active: true },
+        { name: 'Здоровые зубы', region: 'Промышленный', rating: 4.6, patients: 128, plans: 85, conversion: 65, complaints: 0, active: true },
+        { name: 'Семейная стоматология', region: 'Ленинский', rating: 4.5, patients: 115, plans: 78, conversion: 62, complaints: 3, active: true },
+        { name: 'ДентаМед', region: 'Центральный', rating: 4.5, patients: 108, plans: 72, conversion: 60, complaints: 1, active: true },
+        { name: 'Стоматекс', region: 'Заднепровский', rating: 4.3, patients: 98, plans: 65, conversion: 58, complaints: 4, active: true },
+        { name: 'Дента Плюс', region: 'Промышленный', rating: 4.2, patients: 92, plans: 61, conversion: 55, complaints: 2, active: false },
+        { name: 'Белая улыбка', region: 'Ленинский', rating: 4.1, patients: 85, plans: 56, conversion: 52, complaints: 5, active: true }
+    ];
+    
+    const html = clinics.map(clinic => `
+        <tr>
+            <td><strong>${clinic.name}</strong></td>
+            <td>${clinic.region}</td>
+            <td class="text-center">
+                <i class="bi bi-star-fill text-warning"></i> ${clinic.rating}
+            </td>
+            <td class="text-center">${clinic.patients}</td>
+            <td class="text-center">${clinic.plans}</td>
+            <td class="text-center">
+                <span class="badge bg-${clinic.conversion >= 65 ? 'success' : clinic.conversion >= 55 ? 'warning' : 'danger'}">
+                    ${clinic.conversion}%
+                </span>
+            </td>
+            <td class="text-center">
+                ${clinic.complaints > 0 ? `<span class="badge bg-danger">${clinic.complaints}</span>` : '<span class="badge bg-success">0</span>'}
+            </td>
+            <td class="text-center">
+                ${clinic.active ? '<span class="badge bg-success">Активна</span>' : '<span class="badge bg-secondary">Неактивна</span>'}
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewClinicDetails('${clinic.name}')">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('clinicsTable').innerHTML = html;
+}
+
+function viewClinicDetails(clinicName) {
+    const modal = new bootstrap.Modal(document.getElementById('clinicDetailsModal'));
+    modal.show();
+    
+    // Mock details
+    const html = `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="small text-muted">Название</label>
+                <div><strong>${clinicName}</strong></div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small text-muted">Рейтинг</label>
+                <div><i class="bi bi-star-fill text-warning"></i> <strong>4.7</strong></div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small text-muted">Всего пациентов</label>
+                <div><strong>142</strong></div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small text-muted">Планов лечения</label>
+                <div><strong>96</strong></div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small text-muted">Конверсия</label>
+                <div><span class="badge bg-success">68%</span></div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="small text-muted">Жалоб</label>
+                <div><span class="badge bg-success">0</span></div>
+            </div>
+            <div class="col-12 mb-3">
+                <label class="small text-muted">Специализации</label>
+                <div>
+                    <span class="badge bg-info me-1">Терапия</span>
+                    <span class="badge bg-info me-1">Ортопедия</span>
+                    <span class="badge bg-info me-1">Хирургия</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('clinicDetailsContent').innerHTML = html;
+}
+
+function applyFilters() {
+    showToast('Фильтры применены', 'info');
+}
+
+function exportData() {
+    showToast('Экспорт данных в разработке', 'info');
+}
+
+document.addEventListener('DOMContentLoaded', loadClinicsData);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

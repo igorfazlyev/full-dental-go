@@ -1,0 +1,400 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/patient/dashboard">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="/patient/treatment-plans">Планы лечения</a></li>
+                    <li class="breadcrumb-item active">План #{{.plan.ID}}</li>
+                </ol>
+            </nav>
+            <h1 class="mb-0">
+                <i class="bi bi-clipboard2-pulse"></i> План лечения #{{.plan.ID}}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Plan Info -->
+        <div class="col-lg-8">
+            <!-- Status Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Информация о плане</h5>
+                        {{if eq .plan.Status "active"}}
+                            <span class="badge bg-primary fs-6">Активный</span>
+                        {{else if eq .plan.Status "consultation_scheduled"}}
+                            <span class="badge bg-info fs-6">Консультация назначена</span>
+                        {{else if eq .plan.Status "treatment_started"}}
+                            <span class="badge bg-warning fs-6">Лечение началось</span>
+                        {{else if eq .plan.Status "completed"}}
+                            <span class="badge bg-success fs-6">Завершен</span>
+                        {{end}}
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Дата создания</small>
+                                    <strong>{{formatDate .plan.CreatedAt}}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Ориентировочный срок</small>
+                                    <strong>{{.plan.EstimatedDurationWeeks}} недель</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-currency-exchange text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Ориентировочная стоимость</small>
+                                    <strong>{{formatCurrency .plan.TotalEstimatedCostMin}} - {{formatCurrency .plan.TotalEstimatedCostMax}}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-list-check text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Процедур</small>
+                                    <strong>{{len .plan.Items}}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Treatment Items by Specialization -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul"></i> Необходимые процедуры
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{range .specializations}}
+                    {{$specID := .ID}}
+                    {{$hasItems := false}}
+                    {{range $.plan.Items}}
+                        {{if .SpecializationID}}
+                            {{if eq .SpecializationID.Valid true}}
+                                {{if eq .SpecializationID.Uint $specID}}
+                                    {{$hasItems = true}}
+                                {{end}}
+                            {{end}}
+                        {{end}}
+                    {{end}}
+                    
+                    {{if $hasItems}}
+                    <div class="mb-4">
+                        <h6 class="text-primary border-bottom pb-2">
+                            <i class="bi bi-caret-right-fill"></i> {{.Name}}
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Номер зуба</th>
+                                        <th>Диагноз</th>
+                                        <th>Процедура</th>
+                                        <th class="text-end">Ориентировочная стоимость</th>
+                                        <th class="text-center">Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range $.plan.Items}}
+                                        {{if .SpecializationID}}
+                                            {{if eq .SpecializationID.Valid true}}
+                                                {{if eq .SpecializationID.Uint $specID}}
+                                                <tr>
+                                                    <td>
+                                                        {{if .ToothNumber}}
+                                                            <span class="badge bg-secondary">{{.ToothNumber}}</span>
+                                                        {{else}}
+                                                            -
+                                                        {{end}}
+                                                    </td>
+                                                    <td>{{.Diagnosis}}</td>
+                                                    <td>{{.ProcedureName}}</td>
+                                                    <td class="text-end">
+                                                        <small>{{formatCurrency .EstimatedCostMin}} - {{formatCurrency .EstimatedCostMax}}</small>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {{if .IsCompleted}}
+                                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                                        {{else}}
+                                                            <i class="bi bi-circle text-muted"></i>
+                                                        {{end}}
+                                                    </td>
+                                                </tr>
+                                                {{end}}
+                                            {{end}}
+                                        {{end}}
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {{end}}
+                    {{end}}
+                </div>
+            </div>
+
+            <!-- Clinic Offers -->
+            {{if .plan.Offers}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building"></i> Предложения от клиник ({{len .plan.Offers}})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {{range .plan.Offers}}
+                        <div class="col-12">
+                            <div class="card {{if eq .Status "accepted"}}border-success{{end}}">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-2">
+                                                {{.Clinic.ClinicName}}
+                                                {{if eq .Status "accepted"}}
+                                                    <span class="badge bg-success">Принято</span>
+                                                {{else if eq .Status "pending"}}
+                                                    <span class="badge bg-warning">Ожидание</span>
+                                                {{else if eq .Status "rejected"}}
+                                                    <span class="badge bg-secondary">Отклонено</span>
+                                                {{end}}
+                                            </h6>
+                                            <div class="mb-2">
+                                                {{if .Clinic.Region}}
+                                                    <i class="bi bi-geo-alt"></i>
+                                                    <small class="text-muted">{{.Clinic.Region.Name}}, {{.Clinic.Region.City}}</small>
+                                                {{end}}
+                                                {{if .Clinic.Rating}}
+                                                    <span class="ms-2">
+                                                        <i class="bi bi-star-fill text-warning"></i>
+                                                        <small>{{.Clinic.Rating}} ({{.Clinic.ReviewCount}} отзывов)</small>
+                                                    </span>
+                                                {{end}}
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong class="text-primary fs-5">{{formatCurrency .TotalCost}}</strong>
+                                                {{if gt .DiscountPercentage 0}}
+                                                    <span class="badge bg-danger ms-2">-{{.DiscountPercentage}}%</span>
+                                                {{end}}
+                                            </div>
+                                            {{if .HasInstallment}}
+                                                <div class="mb-2">
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-credit-card"></i> Рассрочка
+                                                    </span>
+                                                </div>
+                                            {{end}}
+                                            {{if .SpecialOffers}}
+                                                <div class="small text-muted">
+                                                    <i class="bi bi-gift"></i> {{.SpecialOffers}}
+                                                </div>
+                                            {{end}}
+                                        </div>
+                                        <div class="col-md-4 text-md-end">
+                                            {{if eq .Status "pending"}}
+                                                <button class="btn btn-success btn-sm d-block w-100 mb-2" onclick="acceptOffer({{.ID}})">
+                                                    <i class="bi bi-check-circle"></i> Принять
+                                                </button>
+                                                <button class="btn btn-outline-primary btn-sm d-block w-100" onclick="viewClinicDetails({{.Clinic.ID}})">
+                                                    <i class="bi bi-eye"></i> Подробнее
+                                                </button>
+                                            {{else if eq .Status "accepted"}}
+                                                <a href="/patient/consultations" class="btn btn-primary btn-sm d-block w-100">
+                                                    <i class="bi bi-calendar-check"></i> К консультации
+                                                </a>
+                                            {{end}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            {{else}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-hourglass-split text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Ожидаем предложений от клиник</h5>
+                    <p class="text-muted">Клиники получили ваш план лечения. Предложения появятся здесь в течение 24-48 часов.</p>
+                </div>
+            </div>
+            {{end}}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Search Criteria -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel"></i> Настройка критериев поиска
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form id="searchCriteriaForm">
+                        <div class="mb-3">
+                            <label class="form-label small">Регион</label>
+                            <select class="form-select form-select-sm" id="region_filter">
+                                <option value="">Все регионы</option>
+                                {{range .regions}}
+                                <option value="{{.ID}}">{{.Name}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small">Специализации</label>
+                            {{range .specializations}}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="{{.ID}}" id="spec_{{.ID}}">
+                                <label class="form-check-label small" for="spec_{{.ID}}">
+                                    {{.Name}}
+                                </label>
+                            </div>
+                            {{end}}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small">Ценовой сегмент</label>
+                            <select class="form-select form-select-sm" id="price_segment">
+                                <option value="">Любой</option>
+                                <option value="economy">Эконом</option>
+                                <option value="medium">Средний</option>
+                                <option value="premium">Премиум</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="has_installment">
+                                <label class="form-check-label small" for="has_installment">
+                                    Рассрочка
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-primary w-100" onclick="applyFilters()">
+                            <i class="bi bi-search"></i> Применить
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Scan Info -->
+            {{if .plan.Scan}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-file-medical"></i> Информация о снимке
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">Тип:</small>
+                        <strong class="d-block">{{.plan.Scan.ScanType}}</strong>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Загружен:</small>
+                        <strong class="d-block">{{formatDate .plan.Scan.UploadedAt}}</strong>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Статус:</small>
+                        <span class="badge bg-success d-block">{{.plan.Scan.Status}}</span>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-outline-primary w-100 mt-2">
+                        <i class="bi bi-eye"></i> Просмотреть снимок
+                    </a>
+                </div>
+            </div>
+            {{end}}
+
+            <!-- Help -->
+            <div class="card shadow-sm border-info">
+                <div class="card-body">
+                    <h6 class="text-info">
+                        <i class="bi bi-info-circle"></i> Что дальше?
+                    </h6>
+                    <ol class="small mb-0 ps-3">
+                        <li class="mb-2">Дождитесь предложений от клиник</li>
+                        <li class="mb-2">Сравните цены и условия</li>
+                        <li class="mb-2">Примите лучшее предложение</li>
+                        <li class="mb-2">Запишитесь на консультацию</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+async function acceptOffer(offerId) {
+    if (!confirm('Принять это предложение? Остальные предложения будут отклонены.')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        await API.post(`/patient/offers/${offerId}/accept`, {});
+        hideLoading();
+        
+        showToast('Предложение принято! Клиника свяжется с вами в ближайшее время.', 'success');
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка принятия предложения', 'danger');
+    }
+}
+
+function viewClinicDetails(clinicId) {
+    window.open(`/api/public/clinics/${clinicId}`, '_blank');
+}
+
+function applyFilters() {
+    showToast('Фильтры применены', 'info');
+    // In a real app, this would filter the offers
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

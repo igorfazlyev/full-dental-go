@@ -1,0 +1,361 @@
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-shield-check"></i> Панель администратора
+            </h1>
+            <p class="text-muted">Управление платформой и мониторинг системы</p>
+        </div>
+    </div>
+
+    <!-- System Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Всего пациентов</h6>
+                            <h2 class="mb-0">{{.total_patients}}</h2>
+                        </div>
+                        <div class="text-primary" style="font-size: 3rem;">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                    <small class="text-success">
+                        <i class="bi bi-arrow-up"></i> +12% за месяц
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm stat-card success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Клиник</h6>
+                            <h2 class="mb-0">{{.total_clinics}}</h2>
+                        </div>
+                        <div class="text-success" style="font-size: 3rem;">
+                            <i class="bi bi-building"></i>
+                        </div>
+                    </div>
+                    <small class="text-success">
+                        <i class="bi bi-arrow-up"></i> +5 новых
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm stat-card info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Планов лечения</h6>
+                            <h2 class="mb-0">{{.total_treatment_plans}}</h2>
+                        </div>
+                        <div class="text-info" style="font-size: 3rem;">
+                            <i class="bi bi-clipboard2-pulse"></i>
+                        </div>
+                    </div>
+                    <small class="text-success">
+                        <i class="bi bi-arrow-up"></i> +18% за неделю
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm stat-card warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Транзакций</h6>
+                            <h2 class="mb-0" id="totalTransactions">0</h2>
+                        </div>
+                        <div class="text-warning" style="font-size: 3rem;">
+                            <i class="bi bi-currency-exchange"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">За последние 30 дней</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Активность платформы
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="activityChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Пользователи по ролям
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="rolesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="bi bi-lightning-fill text-warning"></i> Быстрые действия
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <a href="/admin/users" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-people fs-4 d-block mb-2"></i>
+                                Пользователи
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/admin/clinics" class="btn btn-outline-success w-100">
+                                <i class="bi bi-building fs-4 d-block mb-2"></i>
+                                Клиники
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/admin/specializations" class="btn btn-outline-info w-100">
+                                <i class="bi bi-heart-pulse fs-4 d-block mb-2"></i>
+                                Специализации
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/admin/regions" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-geo-alt fs-4 d-block mb-2"></i>
+                                Регионы
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/admin/complaints" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-exclamation-triangle fs-4 d-block mb-2"></i>
+                                Жалобы
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/admin/audit-logs" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-list-ul fs-4 d-block mb-2"></i>
+                                Логи
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Alerts -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Последние события
+                    </h5>
+                </div>
+                <div class="card-body" id="recentActivity">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bell"></i> Требуют внимания
+                    </h5>
+                </div>
+                <div class="card-body" id="alerts">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-warning" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+async function loadDashboard() {
+    try {
+        const stats = await API.get('/admin/stats');
+        
+        // Update transaction count
+        document.getElementById('totalTransactions').textContent = stats.total_transactions || 0;
+        
+        // Load charts
+        loadActivityChart();
+        loadRolesChart();
+        
+        // Load activity
+        loadRecentActivity();
+        loadAlerts();
+        
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+function loadActivityChart() {
+    const ctx = document.getElementById('activityChart');
+    
+    const data = {
+        labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+        datasets: [
+            {
+                label: 'Пациенты',
+                data: [120, 190, 300, 250, 200, 300, 350, 400, 450, 500, 550, 600],
+                borderColor: 'rgba(13, 110, 253, 1)',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Планы лечения',
+                data: [65, 95, 150, 120, 95, 145, 170, 195, 220, 245, 270, 295],
+                borderColor: 'rgba(25, 135, 84, 1)',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4
+            }
+        ]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadRolesChart() {
+    const ctx = document.getElementById('rolesChart');
+    
+    const data = {
+        labels: ['Пациенты', 'Клиники', 'Администраторы', 'Госслужащие'],
+        datasets: [{
+            data: [{{.total_patients}}, {{.total_clinics}}, 5, 3],
+            backgroundColor: [
+                'rgba(13, 110, 253, 0.8)',
+                'rgba(25, 135, 84, 0.8)',
+                'rgba(220, 53, 69, 0.8)',
+                'rgba(255, 193, 7, 0.8)'
+            ]
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function loadRecentActivity() {
+    try {
+        const logs = await API.get('/admin/audit-logs?limit=10');
+        
+        const html = logs.slice(0, 8).map(log => `
+            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                <div class="me-3">
+                    <i class="bi bi-circle-fill text-primary" style="font-size: 8px;"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between">
+                        <small><strong>${log.user?.full_name || 'Система'}</strong></small>
+                        <small class="text-muted">${formatDateTime(log.created_at)}</small>
+                    </div>
+                    <small class="text-muted">${log.action}: ${log.entity_type} #${log.entity_id}</small>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('recentActivity').innerHTML = html || 
+            '<p class="text-center text-muted">Нет активности</p>';
+    } catch (error) {
+        document.getElementById('recentActivity').innerHTML = 
+            '<p class="text-center text-danger">Ошибка загрузки</p>';
+    }
+}
+
+async function loadAlerts() {
+    try {
+        const complaints = await API.get('/admin/complaints?status=open&limit=5');
+        
+        const html = complaints.map(complaint => `
+            <div class="alert alert-warning d-flex align-items-center mb-2">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <div class="flex-grow-1">
+                    <strong>Жалоба #${complaint.id}</strong>
+                    <br>
+                    <small>${complaint.complaint_text?.substring(0, 50)}...</small>
+                </div>
+                <a href="/admin/complaints" class="btn btn-sm btn-outline-warning">
+                    Просмотр
+                </a>
+            </div>
+        `).join('');
+        
+        document.getElementById('alerts').innerHTML = html || 
+            '<p class="text-center text-muted">Нет новых уведомлений</p>';
+    } catch (error) {
+        document.getElementById('alerts').innerHTML = 
+            '<p class="text-center text-danger">Ошибка загрузки</p>';
+    }
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

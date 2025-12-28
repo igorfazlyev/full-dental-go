@@ -1,0 +1,267 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-speedometer2"></i> Личный кабинет пациента
+            </h1>
+            <p class="text-muted">Добро пожаловать, {{.patient.User.FullName}}</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Мои снимки</h6>
+                            <h2 class="mb-0">{{.scans_count}}</h2>
+                        </div>
+                        <div class="text-primary" style="font-size: 3rem;">
+                            <i class="bi bi-file-medical"></i>
+                        </div>
+                    </div>
+                    <a href="/patient/scans" class="btn btn-sm btn-outline-primary mt-3 w-100">
+                        Просмотреть
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card stat-card success shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Планы лечения</h6>
+                            <h2 class="mb-0">{{.treatment_plans_count}}</h2>
+                        </div>
+                        <div class="text-success" style="font-size: 3rem;">
+                            <i class="bi bi-clipboard2-pulse"></i>
+                        </div>
+                    </div>
+                    <a href="/patient/treatment-plans" class="btn btn-sm btn-outline-success mt-3 w-100">
+                        Просмотреть
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card stat-card info shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Консультации</h6>
+                            <h2 class="mb-0">{{.consultations_count}}</h2>
+                        </div>
+                        <div class="text-info" style="font-size: 3rem;">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                    </div>
+                    <a href="/patient/consultations" class="btn btn-sm btn-outline-info mt-3 w-100">
+                        Просмотреть
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="bi bi-lightning-fill text-warning"></i> Быстрые действия
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/patient/scans/upload" class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-cloud-upload fs-4 d-block mb-2"></i>
+                                Загрузить снимок
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/patient/treatment-plans" class="btn btn-success w-100 py-3">
+                                <i class="bi bi-search fs-4 d-block mb-2"></i>
+                                Найти клинику
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100 py-3" onclick="viewMyHistory()">
+                                <i class="bi bi-clock-history fs-4 d-block mb-2"></i>
+                                История лечения
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/patient/consultations" class="btn btn-warning w-100 py-3">
+                                <i class="bi bi-calendar-event fs-4 d-block mb-2"></i>
+                                Записи
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-activity"></i> Последняя активность
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recentActivity">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-4">
+                        <i class="bi bi-info-circle-fill"></i> Как это работает?
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <h3 class="mb-0">1</h3>
+                                </div>
+                                <h6>Загрузите снимок</h6>
+                                <p class="text-muted small">Загрузите КТ-снимок вашей полости рта</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <h3 class="mb-0">2</h3>
+                                </div>
+                                <h6>Получите план</h6>
+                                <p class="text-muted small">ИИ проанализирует снимок и создаст план лечения</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <h3 class="mb-0">3</h3>
+                                </div>
+                                <h6>Выберите клинику</h6>
+                                <p class="text-muted small">Сравните предложения от разных клиник</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <h3 class="mb-0">4</h3>
+                                </div>
+                                <h6>Начните лечение</h6>
+                                <p class="text-muted small">Запишитесь на консультацию в выбранную клинику</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+async function loadRecentActivity() {
+    try {
+        const [scans, plans, consultations] = await Promise.all([
+            API.get('/patient/scans'),
+            API.get('/patient/treatment-plans'),
+            API.get('/patient/consultations')
+        ]);
+        
+        const activities = [];
+        
+        // Add recent scans
+        scans.slice(0, 3).forEach(scan => {
+            activities.push({
+                type: 'scan',
+                icon: 'file-medical',
+                color: 'primary',
+                text: `Загружен снимок`,
+                date: scan.uploaded_at,
+                status: scan.status
+            });
+        });
+        
+        // Add recent treatment plans
+        plans.slice(0, 3).forEach(plan => {
+            activities.push({
+                type: 'plan',
+                icon: 'clipboard2-pulse',
+                color: 'success',
+                text: `Создан план лечения`,
+                date: plan.created_at,
+                status: plan.status
+            });
+        });
+        
+        // Add recent consultations
+        consultations.slice(0, 3).forEach(consultation => {
+            activities.push({
+                type: 'consultation',
+                icon: 'calendar-check',
+                color: 'info',
+                text: `Консультация запланирована`,
+                date: consultation.created_at,
+                status: consultation.status
+            });
+        });
+        
+        // Sort by date
+        activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const html = activities.slice(0, 5).map(activity => `
+            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                <div class="text-${activity.color} me-3">
+                    <i class="bi bi-${activity.icon} fs-4"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">${activity.text}</h6>
+                        <small class="text-muted">${formatDate(activity.date)}</small>
+                    </div>
+                    ${getStatusBadge(activity.status)}
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('recentActivity').innerHTML = html || '<p class="text-center text-muted">Нет активности</p>';
+    } catch (error) {
+        document.getElementById('recentActivity').innerHTML = '<p class="text-center text-danger">Ошибка загрузки</p>';
+    }
+}
+
+function viewMyHistory() {
+    showToast('Раздел в разработке', 'info');
+}
+
+// Load recent activity on page load
+document.addEventListener('DOMContentLoaded', loadRecentActivity);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

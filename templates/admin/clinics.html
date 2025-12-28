@@ -1,0 +1,229 @@
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-building"></i> Управление клиниками
+            </h1>
+            <p class="text-muted">Список и контроль всех клиник в системе</p>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Всего клиник</h6>
+                    <h3>{{len .clinics}}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Активных</h6>
+                    <h3 class="text-success" id="activeClinics">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Средний рейтинг</h6>
+                    <h3 class="text-warning" id="avgRating">0.0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Всего отзывов</h6>
+                    <h3 id="totalReviews">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="regionFilter">
+                        <option value="">Все регионы</option>
+                        {{range .regions}}
+                        <option value="{{.ID}}">{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="ratingFilter">
+                        <option value="">Любой рейтинг</option>
+                        <option value="4">4+ звезд</option>
+                        <option value="3">3+ звезд</option>
+                        <option value="2">2+ звезд</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="bi bi-funnel"></i> Применить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clinics List -->
+    <div class="row g-4">
+        {{if .clinics}}
+            {{range .clinics}}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        <div class="bg-success text-white rounded d-flex align-items-center justify-content-center" 
+                                             style="width: 60px; height: 60px;">
+                                            <i class="bi bi-building fs-3"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-2">
+                                            {{.ClinicName}}
+                                            {{if .User.IsActive}}
+                                                <span class="badge bg-success">Активна</span>
+                                            {{else}}
+                                                <span class="badge bg-secondary">Неактивна</span>
+                                            {{end}}
+                                        </h5>
+                                        
+                                        <div class="mb-2">
+                                            {{if .Region}}
+                                                <i class="bi bi-geo-alt text-muted"></i>
+                                                <small>{{.Region.Name}}, {{.Region.City}}</small>
+                                            {{end}}
+                                            {{if .Rating}}
+                                                <span class="ms-3">
+                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                    <strong>{{.Rating}}</strong>
+                                                    <small class="text-muted">({{.ReviewCount}} отзывов)</small>
+                                                </span>
+                                            {{end}}
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <i class="bi bi-award"></i> Лицензия: {{.LicenseNumber}}
+                                            </small>
+                                            {{if .YearEstablished}}
+                                                <small class="text-muted ms-3">
+                                                    <i class="bi bi-calendar3"></i> Основана: {{.YearEstablished}}
+                                                </small>
+                                            {{end}}
+                                        </div>
+
+                                        {{if .Specializations}}
+                                        <div class="mb-2">
+                                            {{range .Specializations}}
+                                                <span class="badge bg-info me-1">{{.Name}}</span>
+                                            {{end}}
+                                        </div>
+                                        {{end}}
+
+                                        <div class="row g-2 mt-2">
+                                            <div class="col-auto">
+                                                <small class="text-muted">Email: {{.User.Email}}</small>
+                                            </div>
+                                            <div class="col-auto">
+                                                <small class="text-muted">Телефон: {{.User.Phone}}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <div class="d-grid gap-2">
+                                    <a href="/admin/clinics/{{.ID}}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-eye"></i> Подробнее
+                                    </a>
+                                    <button class="btn btn-outline-warning btn-sm" onclick="toggleClinicStatus({{.ID}}, {{.User.IsActive}})">
+                                        <i class="bi bi-{{if .User.IsActive}}lock{{else}}unlock{{end}}"></i> 
+                                        {{if .User.IsActive}}Деактивировать{{else}}Активировать{{end}}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-building text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">Нет клиник</h4>
+                    </div>
+                </div>
+            </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+// Calculate stats
+document.addEventListener('DOMContentLoaded', function() {
+    const clinics = {{.clinics | len}};
+    let activeClinics = 0;
+    let totalRating = 0;
+    let totalReviews = 0;
+    
+    {{range .clinics}}
+        {{if .User.IsActive}}
+            activeClinics++;
+        {{end}}
+        {{if .Rating}}
+            totalRating += {{.Rating}};
+        {{end}}
+        {{if .ReviewCount}}
+            totalReviews += {{.ReviewCount}};
+        {{end}}
+    {{end}}
+    
+    document.getElementById('activeClinics').textContent = activeClinics;
+    document.getElementById('avgRating').textContent = clinics > 0 ? (totalRating / clinics).toFixed(1) : '0.0';
+    document.getElementById('totalReviews').textContent = totalReviews;
+});
+
+function applyFilters() {
+    showToast('Фильтры применены', 'info');
+}
+
+async function toggleClinicStatus(clinicId, currentStatus) {
+    const action = currentStatus ? 'деактивировать' : 'активировать';
+    if (!confirm(`Вы уверены, что хотите ${action} эту клинику?`)) return;
+    
+    try {
+        showLoading();
+        await API.patch(`/admin/users/${clinicId}/toggle-status`, {});
+        hideLoading();
+        
+        showToast(`Клиника ${action === 'деактивировать' ? 'деактивирована' : 'активирована'}`, 'success');
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка изменения статуса', 'danger');
+    }
+}
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

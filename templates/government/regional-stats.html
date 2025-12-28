@@ -1,0 +1,369 @@
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-bar-chart"></i> Региональная статистика
+            </h1>
+            <p class="text-muted">Детальная статистика по регионам</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-success" onclick="exportReport()">
+                <i class="bi bi-download"></i> Экспорт отчета
+            </button>
+        </div>
+    </div>
+
+    <!-- Region Selector -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label">Выберите регион</label>
+                    <select class="form-select" id="regionSelector" onchange="loadRegionStats()">
+                        <option value="">Все регионы</option>
+                        {{range .regions}}
+                        <option value="{{.ID}}">{{.Name}}, {{.City}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Период</label>
+                    <select class="form-select" id="periodSelector" onchange="loadRegionStats()">
+                        <option value="30">Последние 30 дней</option>
+                        <option value="90" selected>Последние 90 дней</option>
+                        <option value="180">Последние 6 месяцев</option>
+                        <option value="365">Последний год</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Клиник в регионе</h6>
+                    <h3 id="regionClinics">-</h3>
+                    <small class="text-muted">Активных: <span id="activeClinics">-</span></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Пациентов</h6>
+                    <h3 id="regionPatients">-</h3>
+                    <small class="text-success">
+                        <i class="bi bi-arrow-up"></i> <span id="patientsGrowth">-</span>%
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Планов лечения</h6>
+                    <h3 id="regionPlans">-</h3>
+                    <small class="text-muted">Завершено: <span id="completedPlans">-</span></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Средний рейтинг</h6>
+                    <h3 id="avgRating">-</h3>
+                    <small class="text-warning">
+                        <i class="bi bi-star-fill"></i> На основе <span id="reviewsCount">-</span> отзывов
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Динамика пациентов</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="patientsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Распределение диагнозов</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="diagnosesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clinics in Region -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Клиники в регионе</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th class="text-center">Рейтинг</th>
+                                    <th class="text-center">Пациентов</th>
+                                    <th class="text-center">Планов лечения</th>
+                                    <th class="text-center">Конверсия</th>
+                                    <th class="text-center">Жалоб</th>
+                                    <th class="text-center">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clinicsTable">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Indicators -->
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Доступность услуг</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Среднее время до консультации</small>
+                        <h4 id="avgConsultationTime">-</h4>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Среднее время ответа клиник</small>
+                        <h4 id="avgResponseTime">-</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Качество лечения</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Завершенных планов</small>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 78%" id="completionBar">
+                                78%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Удовлетворенность</small>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 85%" id="satisfactionBar">
+                                85%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Популярные процедуры</h6>
+                </div>
+                <div class="card-body" id="topProcedures">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let patientsChart, diagnosesChart;
+
+async function loadRegionStats() {
+    const regionId = document.getElementById('regionSelector').value;
+    const period = document.getElementById('periodSelector').value;
+    
+    try {
+        // Mock data
+        document.getElementById('regionClinics').textContent = regionId ? '12' : '48';
+        document.getElementById('activeClinics').textContent = regionId ? '10' : '42';
+        document.getElementById('regionPatients').textContent = regionId ? '485' : '1,247';
+        document.getElementById('patientsGrowth').textContent = '12.5';
+        document.getElementById('regionPlans').textContent = regionId ? '325' : '856';
+        document.getElementById('completedPlans').textContent = regionId ? '255' : '667';
+        document.getElementById('avgRating').textContent = '4.3';
+        document.getElementById('reviewsCount').textContent = regionId ? '542' : '2,145';
+        
+        document.getElementById('avgConsultationTime').textContent = '3.2 дня';
+        document.getElementById('avgResponseTime').textContent = '4.5 часа';
+        
+        loadPatientsChart();
+        loadDiagnosesChart();
+        loadClinicsTable(regionId);
+        loadTopProcedures();
+        
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+function loadPatientsChart() {
+    const ctx = document.getElementById('patientsChart');
+    
+    const data = {
+        labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+        datasets: [{
+            label: 'Новые пациенты',
+            data: [35, 42, 48, 45, 52, 58, 65, 70, 68, 75, 82, 88],
+            borderColor: 'rgba(13, 110, 253, 1)',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+    
+    if (patientsChart) patientsChart.destroy();
+    
+    patientsChart = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function loadDiagnosesChart() {
+    const ctx = document.getElementById('diagnosesChart');
+    
+    const data = {
+        labels: ['Кариес', 'Пульпит', 'Периодонтит', 'Гингивит', 'Пародонтит', 'Другие'],
+        datasets: [{
+            data: [185, 72, 48, 42, 38, 45],
+            backgroundColor: [
+                'rgba(13, 110, 253, 0.8)',
+                'rgba(25, 135, 84, 0.8)',
+                'rgba(220, 53, 69, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(13, 202, 240, 0.8)',
+                'rgba(108, 117, 125, 0.8)'
+            ]
+        }]
+    };
+    
+    if (diagnosesChart) diagnosesChart.destroy();
+    
+    diagnosesChart = new Chart(ctx, {
+        type: 'pie',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+}
+
+function loadClinicsTable(regionId) {
+    // Mock data
+    const clinics = [
+        { name: 'Стоматология "Улыбка"', rating: 4.7, patients: 145, plans: 98, conversion: 68, complaints: 1 },
+        { name: 'ДентаЛюкс', rating: 4.5, patients: 128, plans: 85, conversion: 65, complaints: 2 },
+        { name: 'Здоровые зубы', rating: 4.3, patients: 112, plans: 72, conversion: 62, complaints: 0 },
+        { name: 'Семейная стоматология', rating: 4.2, patients: 100, plans: 70, conversion: 58, complaints: 3 }
+    ];
+    
+    const html = clinics.map(clinic => `
+        <tr>
+            <td><strong>${clinic.name}</strong></td>
+            <td class="text-center">
+                <i class="bi bi-star-fill text-warning"></i> ${clinic.rating}
+            </td>
+            <td class="text-center">${clinic.patients}</td>
+            <td class="text-center">${clinic.plans}</td>
+            <td class="text-center">${clinic.conversion}%</td>
+            <td class="text-center">
+                ${clinic.complaints > 0 ? `<span class="badge bg-danger">${clinic.complaints}</span>` : '<span class="badge bg-success">0</span>'}
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewClinicDetails()">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('clinicsTable').innerHTML = html;
+}
+
+function loadTopProcedures() {
+    const procedures = [
+        { name: 'Лечение кариеса', count: 185 },
+        { name: 'Протезирование', count: 128 },
+        { name: 'Имплантация', count: 85 },
+        { name: 'Удаление зуба', count: 72 },
+        { name: 'Отбеливание', count: 58 }
+    ];
+    
+    const html = procedures.map((proc, index) => `
+        <div class="d-flex justify-content-between mb-2">
+            <small>${index + 1}. ${proc.name}</small>
+            <small><strong>${proc.count}</strong></small>
+        </div>
+    `).join('');
+    
+    document.getElementById('topProcedures').innerHTML = html;
+}
+
+function viewClinicDetails() {
+    showToast('Функция просмотра деталей в разработке', 'info');
+}
+
+function exportReport() {
+    showToast('Экспорт отчета в разработке', 'info');
+}
+
+document.addEventListener('DOMContentLoaded', loadRegionStats);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

@@ -1,0 +1,111 @@
+{{define "content"}}
+<div class="container">
+    <div class="row justify-content-center py-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">
+                        <i class="bi bi-box-arrow-in-right text-primary"></i> Вход в систему
+                    </h2>
+                    
+                    <div id="alert-container"></div>
+
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Войти
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="mb-0">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-muted small">Тестовые аккаунты:</p>
+                        <ul class="small text-muted">
+                            <li>Пациент: patient1@dental.com / patient123</li>
+                            <li>Клиника: clinic1@dental.com / clinic123</li>
+                            <li>Админ: admin@dental.com / admin123</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Store token
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            // Redirect based on role
+            switch(data.user.role) {
+                case 'patient':
+                    window.location.href = '/patient/dashboard';
+                    break;
+                case 'clinic':
+                    window.location.href = '/clinic/dashboard';
+                    break;
+                case 'admin':
+                    window.location.href = '/admin/dashboard';
+                    break;
+                case 'government':
+                    window.location.href = '/government/dashboard';
+                    break;
+                default:
+                    window.location.href = '/';
+            }
+        } else {
+            showAlert(data.error || 'Ошибка входа', 'danger');
+        }
+    } catch (error) {
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+});
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.getElementById('alert-container').appendChild(alertDiv);
+}
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

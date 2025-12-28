@@ -1,0 +1,205 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-person-badge"></i> Врачи
+            </h1>
+            <p class="text-muted">Управление персоналом клиники</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDoctorModal">
+                <i class="bi bi-plus-circle"></i> Добавить врача
+            </button>
+        </div>
+    </div>
+
+    <!-- Doctors Grid -->
+    <div class="row g-4">
+        {{if .doctors}}
+            {{range .doctors}}
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px;">
+                                <i class="bi bi-person fs-1"></i>
+                            </div>
+                        </div>
+                        <h5 class="card-title">{{.FullName}}</h5>
+                        {{if .Specialization}}
+                            <p class="text-muted mb-2">{{.Specialization.Name}}</p>
+                        {{end}}
+                        
+                        {{if .LicenseNumber}}
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-award"></i> Лицензия: {{.LicenseNumber}}
+                            </small>
+                        </div>
+                        {{end}}
+
+                        {{if .YearsOfExperience}}
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-briefcase"></i> Опыт: {{.YearsOfExperience}} лет
+                            </small>
+                        </div>
+                        {{end}}
+
+                        {{if .Education}}
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="bi bi-mortarboard"></i> {{.Education}}
+                            </small>
+                        </div>
+                        {{end}}
+
+                        {{if .Certifications}}
+                        <div class="mb-3">
+                            <p class="small mb-0"><strong>Сертификаты:</strong></p>
+                            <p class="small text-muted">{{.Certifications}}</p>
+                        </div>
+                        {{end}}
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editDoctor({{.ID}})">
+                                <i class="bi bi-pencil"></i> Редактировать
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDoctor({{.ID}})">
+                                <i class="bi bi-trash"></i> Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-person-badge text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">Нет добавленных врачей</h4>
+                        <p class="text-muted">Добавьте информацию о врачах вашей клиники</p>
+                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addDoctorModal">
+                            <i class="bi bi-plus-circle"></i> Добавить первого врача
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {{end}}
+    </div>
+</div>
+
+<!-- Add Doctor Modal -->
+<div class="modal fade" id="addDoctorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle"></i> Добавить врача
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addDoctorForm">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="doctor_full_name" class="form-label">ФИО</label>
+                            <input type="text" class="form-control" id="doctor_full_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="doctor_specialization" class="form-label">Специализация</label>
+                            <select class="form-select" id="doctor_specialization" required>
+                                <option value="">Выберите специализацию</option>
+                                {{range .specializations}}
+                                <option value="{{.ID}}">{{.Name}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="doctor_license" class="form-label">Номер лицензии</label>
+                            <input type="text" class="form-control" id="doctor_license" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="doctor_experience" class="form-label">Опыт работы (лет)</label>
+                            <input type="number" class="form-control" id="doctor_experience" min="0" max="50">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="doctor_education" class="form-label">Образование</label>
+                            <input type="text" class="form-control" id="doctor_education">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="doctor_certifications" class="form-label">Сертификаты и награды</label>
+                            <textarea class="form-control" id="doctor_certifications" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="submitDoctor()">
+                    <i class="bi bi-save"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+async function submitDoctor() {
+    const form = document.getElementById('addDoctorForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const data = {
+        full_name: document.getElementById('doctor_full_name').value,
+        specialization_id: parseInt(document.getElementById('doctor_specialization').value),
+        license_number: document.getElementById('doctor_license').value,
+        years_of_experience: parseInt(document.getElementById('doctor_experience').value) || 0,
+        education: document.getElementById('doctor_education').value,
+        certifications: document.getElementById('doctor_certifications').value
+    };
+    
+    try {
+        showLoading();
+        await API.post('/clinic/doctors', data);
+        hideLoading();
+        
+        showToast('Врач успешно добавлен!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('addDoctorModal')).hide();
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка добавления врача', 'danger');
+    }
+}
+
+function editDoctor(doctorId) {
+    showToast('Редактирование в разработке', 'info');
+}
+
+async function deleteDoctor(doctorId) {
+    if (!confirm('Удалить этого врача?')) return;
+    
+    try {
+        showLoading();
+        await API.delete(`/clinic/doctors/${doctorId}`);
+        hideLoading();
+        
+        showToast('Врач удален', 'success');
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка удаления', 'danger');
+    }
+}
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

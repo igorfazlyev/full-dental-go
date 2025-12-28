@@ -1,0 +1,213 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-heart-pulse"></i> Управление специализациями
+            </h1>
+            <p class="text-muted">Справочник медицинских специализаций</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#specModal">
+                <i class="bi bi-plus-circle"></i> Добавить специализацию
+            </button>
+        </div>
+    </div>
+
+    <!-- Specializations List -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px">Порядок</th>
+                            <th style="width: 100px">Код</th>
+                            <th>Название</th>
+                            <th>Описание</th>
+                            <th style="width: 100px" class="text-center">Статус</th>
+                            <th style="width: 150px" class="text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="specializationsList">
+                        {{if .specializations}}
+                            {{range .specializations}}
+                            <tr data-id="{{.ID}}">
+                                <td class="text-center">
+                                    <strong>{{.DisplayOrder}}</strong>
+                                </td>
+                                <td>
+                                    <code>{{.Code}}</code>
+                                </td>
+                                <td>
+                                    <strong>{{.Name}}</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{.Description}}</small>
+                                </td>
+                                <td class="text-center">
+                                    {{if .IsActive}}
+                                        <span class="badge bg-success">Активна</span>
+                                    {{else}}
+                                        <span class="badge bg-secondary">Неактивна</span>
+                                    {{end}}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" onclick="editSpec({{.ID}})">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="deleteSpec({{.ID}})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{end}}
+                        {{else}}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <i class="bi bi-heart-pulse text-muted" style="font-size: 3rem;"></i>
+                                    <p class="text-muted mt-3">Нет специализаций</p>
+                                </td>
+                            </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Specialization Modal -->
+<div class="modal fade" id="specModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="specModalTitle">Добавить специализацию</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="specForm">
+                    <input type="hidden" id="spec_id">
+                    <div class="mb-3">
+                        <label for="spec_code" class="form-label">Код</label>
+                        <input type="text" class="form-control" id="spec_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="spec_name" class="form-label">Название</label>
+                        <input type="text" class="form-control" id="spec_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="spec_description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="spec_description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="spec_order" class="form-label">Порядок отображения</label>
+                        <input type="number" class="form-control" id="spec_order" min="0" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="spec_active" checked>
+                            <label class="form-check-label" for="spec_active">
+                                Активна
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="submitSpec()">
+                    <i class="bi bi-save"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+async function submitSpec() {
+    const form = document.getElementById('specForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const specId = document.getElementById('spec_id').value;
+    const data = {
+        code: document.getElementById('spec_code').value,
+        name: document.getElementById('spec_name').value,
+        description: document.getElementById('spec_description').value,
+        display_order: parseInt(document.getElementById('spec_order').value),
+        is_active: document.getElementById('spec_active').checked
+    };
+    
+    try {
+        showLoading();
+        if (specId) {
+            await API.put(`/admin/specializations/${specId}`, data);
+        } else {
+            await API.post('/admin/specializations', data);
+        }
+        hideLoading();
+        
+        showToast('Специализация успешно сохранена!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('specModal')).hide();
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка сохранения', 'danger');
+    }
+}
+
+async function editSpec(specId) {
+    try {
+        showLoading();
+        const spec = await API.get(`/admin/specializations/${specId}`);
+        hideLoading();
+        
+        document.getElementById('spec_id').value = spec.id;
+        document.getElementById('spec_code').value = spec.code;
+        document.getElementById('spec_name').value = spec.name;
+        document.getElementById('spec_description').value = spec.description || '';
+        document.getElementById('spec_order').value = spec.display_order;
+        document.getElementById('spec_active').checked = spec.is_active;
+        
+        document.getElementById('specModalTitle').textContent = 'Редактировать специализацию';
+        const modal = new bootstrap.Modal(document.getElementById('specModal'));
+        modal.show();
+    } catch (error) {
+        hideLoading();
+        showToast('Ошибка загрузки данных', 'danger');
+    }
+}
+
+async function deleteSpec(specId) {
+    if (!confirm('Удалить эту специализацию? Это может повлиять на существующие данные.')) return;
+    
+    try {
+        showLoading();
+        await API.delete(`/admin/specializations/${specId}`);
+        hideLoading();
+        
+        showToast('Специализация удалена', 'success');
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка удаления', 'danger');
+    }
+}
+
+// Reset modal on close
+document.getElementById('specModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('specForm').reset();
+    document.getElementById('spec_id').value = '';
+    document.getElementById('specModalTitle').textContent = 'Добавить специализацию';
+});
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

@@ -1,0 +1,399 @@
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-exclamation-triangle"></i> Статистика жалоб
+            </h1>
+            <p class="text-muted">Анализ жалоб и качества обслуживания</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-danger" onclick="exportComplaintsReport()">
+                <i class="bi bi-download"></i> Экспорт отчета
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Всего жалоб</h6>
+                    <h3>14</h3>
+                    <small class="text-danger"><i class="bi bi-arrow-down"></i> -15% за месяц</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Открытых</h6>
+                    <h3 class="text-danger">3</h3>
+                    <small class="text-muted">Требуют внимания</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Решенных</h6>
+                    <h3 class="text-success">9</h3>
+                    <small class="text-muted">64% от общего числа</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Среднее время решения</h6>
+                    <h3 class="text-primary">2.8д</h3>
+                    <small class="text-success"><i class="bi bi-arrow-down"></i> Улучшение</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Динамика жалоб</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="complaintsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Типы жалоб</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="complaintTypesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaints by Region -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Жалобы по регионам</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Регион</th>
+                                    <th class="text-center">Всего жалоб</th>
+                                    <th class="text-center">Открытых</th>
+                                    <th class="text-center">Решенных</th>
+                                    <th class="text-center">% решенных</th>
+                                    <th class="text-center">Среднее время решения</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Центральный район</strong></td>
+                                    <td class="text-center">5</td>
+                                    <td class="text-center"><span class="badge bg-danger">1</span></td>
+                                    <td class="text-center"><span class="badge bg-success">4</span></td>
+                                    <td class="text-center">80%</td>
+                                    <td class="text-center">2.5 дня</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Заднепровский район</strong></td>
+                                    <td class="text-center">4</td>
+                                    <td class="text-center"><span class="badge bg-danger">1</span></td>
+                                    <td class="text-center"><span class="badge bg-success">3</span></td>
+                                    <td class="text-center">75%</td>
+                                    <td class="text-center">3.2 дня</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Промышленный район</strong></td>
+                                    <td class="text-center">3</td>
+                                    <td class="text-center"><span class="badge bg-danger">1</span></td>
+                                    <td class="text-center"><span class="badge bg-success">2</span></td>
+                                    <td class="text-center">67%</td>
+                                    <td class="text-center">2.8 дня</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ленинский район</strong></td>
+                                    <td class="text-center">2</td>
+                                    <td class="text-center"><span class="badge bg-success">0</span></td>
+                                    <td class="text-center"><span class="badge bg-success">2</span></td>
+                                    <td class="text-center">100%</td>
+                                    <td class="text-center">2.0 дня</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Problem Clinics -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Клиники с наибольшим числом жалоб
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Клиника</th>
+                                    <th class="text-center">Жалоб</th>
+                                    <th class="text-center">Открытых</th>
+                                    <th class="text-center">Рейтинг</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Стоматекс</td>
+                                    <td class="text-center"><span class="badge bg-danger">4</span></td>
+                                    <td class="text-center">2</td>
+                                    <td class="text-center">
+                                        <i class="bi bi-star-fill text-warning"></i> 4.1
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Белая улыбка</td>
+                                    <td class="text-center"><span class="badge bg-warning">3</span></td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center">
+                                        <i class="bi bi-star-fill text-warning"></i> 4.0
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>ДентаЛюкс</td>
+                                    <td class="text-center"><span class="badge bg-warning">2</span></td>
+                                    <td class="text-center">0</td>
+                                    <td class="text-center">
+                                        <i class="bi bi-star-fill text-warning"></i> 4.7
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Категории жалоб
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="complaintCategories"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Complaints -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Последние жалобы</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recentComplaints">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+function loadComplaintsData() {
+    loadComplaintsChart();
+    loadComplaintTypesChart();
+    loadComplaintCategories();
+    loadRecentComplaints();
+}
+
+function loadComplaintsChart() {
+    const ctx = document.getElementById('complaintsChart');
+    
+    const data = {
+        labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+        datasets: [
+            {
+                label: 'Новые жалобы',
+                data: [8, 12, 10, 15, 9, 11, 7, 13, 8, 6, 5, 4],
+                borderColor: 'rgba(220, 53, 69, 1)',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Решенные жалобы',
+                data: [6, 10, 9, 13, 8, 10, 6, 12, 7, 6, 5, 4],
+                borderColor: 'rgba(25, 135, 84, 1)',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4
+            }
+        ]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadComplaintTypesChart() {
+    const ctx = document.getElementById('complaintTypesChart');
+    
+    const data = {
+        labels: ['Качество', 'Цены', 'Сервис', 'Сроки', 'Другое'],
+        datasets: [{
+            data: [5, 3, 4, 1, 1],
+            backgroundColor: [
+                'rgba(220, 53, 69, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(13, 202, 240, 0.8)',
+                'rgba(108, 117, 125, 0.8)',
+                'rgba(13, 110, 253, 0.8)'
+            ]
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadComplaintCategories() {
+    const categories = [
+        { name: 'Качество лечения', count: 5, percentage: 36 },
+        { name: 'Обслуживание', count: 4, percentage: 29 },
+        { name: 'Ценообразование', count: 3, percentage: 21 },
+        { name: 'Сроки ожидания', count: 1, percentage: 7 },
+        { name: 'Прочее', count: 1, percentage: 7 }
+    ];
+    
+    const html = categories.map(cat => `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <small><strong>${cat.name}</strong></small>
+                <small class="text-muted">${cat.count} жалоб</small>
+            </div>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar ${cat.percentage > 30 ? 'bg-danger' : cat.percentage > 20 ? 'bg-warning' : 'bg-info'}" 
+                     role="progressbar" style="width: ${cat.percentage}%">
+                    ${cat.percentage}%
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('complaintCategories').innerHTML = html;
+}
+
+function loadRecentComplaints() {
+    const complaints = [
+        { id: 14, clinic: 'Стоматекс', patient: 'Иванов И.И.', date: '2025-12-25', status: 'open', text: 'Некачественное лечение кариеса' },
+        { id: 13, clinic: 'Белая улыбка', patient: 'Петрова М.С.', date: '2025-12-22', status: 'in_review', text: 'Задержка начала лечения' },
+        { id: 12, clinic: 'ДентаМед', patient: 'Сидоров П.А.', date: '2025-12-20', status: 'resolved', text: 'Проблемы с записью на прием' },
+        { id: 11, clinic: 'Стоматекс', patient: 'Козлова А.В.', date: '2025-12-18', status: 'resolved', text: 'Высокая стоимость услуг' }
+    ];
+    
+    const html = complaints.map(complaint => {
+        let statusBadge, statusText;
+        if (complaint.status === 'open') {
+            statusBadge = 'danger';
+            statusText = 'Открыта';
+        } else if (complaint.status === 'in_review') {
+            statusBadge = 'warning';
+            statusText = 'На рассмотрении';
+        } else {
+            statusBadge = 'success';
+            statusText = 'Решена';
+        }
+        
+        return `
+            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                <div class="me-3">
+                    <div class="bg-${statusBadge} text-white rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px;">
+                        <strong>#${complaint.id}</strong>
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between mb-1">
+                        <h6 class="mb-0">${complaint.clinic}</h6>
+                        <small class="text-muted">${formatDate(complaint.date)}</small>
+                    </div>
+                    <p class="mb-1 small">${complaint.text}</p>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Пациент: ${complaint.patient}</small>
+                        <span class="badge bg-${statusBadge}">${statusText}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('recentComplaints').innerHTML = html;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function exportComplaintsReport() {
+    showToast('Экспорт отчета в разработке', 'info');
+}
+
+document.addEventListener('DOMContentLoaded', loadComplaintsData);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

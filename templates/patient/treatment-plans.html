@@ -1,0 +1,133 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-clipboard2-pulse"></i> Планы лечения
+            </h1>
+            <p class="text-muted">Ваши планы лечения и предложения от клиник</p>
+        </div>
+    </div>
+
+    <!-- Plans List -->
+    <div class="row g-4">
+        {{if .plans}}
+            {{range .plans}}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        <i class="bi bi-clipboard2-pulse-fill text-primary" style="font-size: 2.5rem;"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-2">
+                                            План лечения #{{.ID}}
+                                            {{if eq .Status "active"}}
+                                                <span class="badge bg-primary">Активный</span>
+                                            {{else if eq .Status "consultation_scheduled"}}
+                                                <span class="badge bg-info">Консультация назначена</span>
+                                            {{else if eq .Status "treatment_started"}}
+                                                <span class="badge bg-warning">Лечение началось</span>
+                                            {{else if eq .Status "completed"}}
+                                                <span class="badge bg-success">Завершен</span>
+                                            {{else}}
+                                                <span class="badge bg-secondary">{{.Status}}</span>
+                                            {{end}}
+                                        </h5>
+                                        <div class="mb-2">
+                                            <i class="bi bi-calendar3"></i>
+                                            <small class="text-muted">Создан: {{formatDate .CreatedAt}}</small>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Процедур:</strong> {{len .Items}} |
+                                            <strong>Стоимость:</strong> {{formatCurrency .TotalEstimatedCostMin}} - {{formatCurrency .TotalEstimatedCostMax}}
+                                            {{if .EstimatedDurationWeeks}}
+                                                | <strong>Срок:</strong> {{.EstimatedDurationWeeks}} недель
+                                            {{end}}
+                                        </div>
+                                        {{if .Offers}}
+                                        <div>
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-building"></i> {{len .Offers}} предложений от клиник
+                                            </span>
+                                        </div>
+                                        {{end}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <a href="/patient/treatment-plans/{{.ID}}" class="btn btn-primary">
+                                    <i class="bi bi-eye"></i> Подробнее
+                                </a>
+                            </div>
+                        </div>
+
+                        {{if .Items}}
+                        <hr>
+                        <div class="row g-2">
+                            {{range .Items}}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start p-2 bg-light rounded">
+                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                    <div class="small">
+                                        <strong>{{.ProcedureName}}</strong>
+                                        {{if .ToothNumber}}
+                                            <span class="text-muted">(зуб {{.ToothNumber}})</span>
+                                        {{end}}
+                                        <br>
+                                        {{if .Specialization}}
+                                            <span class="badge badge-sm bg-secondary">{{.Specialization.Name}}</span>
+                                        {{end}}
+                                    </div>
+                                </div>
+                            </div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-clipboard2-pulse text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">У вас пока нет планов лечения</h4>
+                        <p class="text-muted">Загрузите снимок, чтобы получить план лечения</p>
+                        <a href="/patient/scans/upload" class="btn btn-primary mt-3">
+                            <i class="bi bi-cloud-upload"></i> Загрузить снимок
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

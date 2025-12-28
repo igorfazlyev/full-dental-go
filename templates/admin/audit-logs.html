@@ -1,0 +1,192 @@
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-list-ul"></i> Журнал аудита
+            </h1>
+            <p class="text-muted">История действий в системе</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Действие</label>
+                    <select class="form-select" id="actionFilter">
+                        <option value="">Все действия</option>
+                        <option value="create">Создание</option>
+                        <option value="update">Обновление</option>
+                        <option value="delete">Удаление</option>
+                        <option value="login">Вход в систему</option>
+                        <option value="logout">Выход из системы</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Тип сущности</label>
+                    <select class="form-select" id="entityFilter">
+                        <option value="">Все типы</option>
+                        <option value="user">Пользователь</option>
+                        <option value="clinic">Клиника</option>
+                        <option value="treatment_plan">План лечения</option>
+                        <option value="offer">Предложение</option>
+                        <option value="consultation">Консультация</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Дата от</label>
+                    <input type="date" class="form-control" id="dateFrom">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Дата до</label>
+                    <input type="date" class="form-control" id="dateTo">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="bi bi-funnel"></i> Применить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px">ID</th>
+                            <th style="width: 180px">Дата и время</th>
+                            <th style="width: 200px">Пользователь</th>
+                            <th style="width: 120px">Действие</th>
+                            <th style="width: 150px">Тип сущности</th>
+                            <th style="width: 100px">ID сущности</th>
+                            <th>Детали</th>
+                            <th style="width: 120px">IP адрес</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{if .logs}}
+                            {{range .logs}}
+                            <tr>
+                                <td><small>#{{.ID}}</small></td>
+                                <td><small>{{formatDateTime .CreatedAt}}</small></td>
+                                <td>
+                                    {{if .User}}
+                                        <small>
+                                            <strong>{{.User.FullName}}</strong>
+                                            <br>
+                                            <span class="text-muted">{{.User.Role}}</span>
+                                        </small>
+                                    {{else}}
+                                        <small class="text-muted">Система</small>
+                                    {{end}}
+                                </td>
+                                <td>
+                                    {{if eq .Action "create"}}
+                                        <span class="badge bg-success">Создание</span>
+                                    {{else if eq .Action "update"}}
+                                        <span class="badge bg-primary">Обновление</span>
+                                    {{else if eq .Action "delete"}}
+                                        <span class="badge bg-danger">Удаление</span>
+                                    {{else if eq .Action "login"}}
+                                        <span class="badge bg-info">Вход</span>
+                                    {{else if eq .Action "logout"}}
+                                        <span class="badge bg-secondary">Выход</span>
+                                    {{else}}
+                                        <span class="badge bg-light text-dark">{{.Action}}</span>
+                                    {{end}}
+                                </td>
+                                <td><small>{{.EntityType}}</small></td>
+                                <td><small><code>{{.EntityID}}</code></small></td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{if .Details}}
+                                            {{.Details}}
+                                        {{else}}
+                                            -
+                                        {{end}}
+                                    </small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{if .IPAddress}}
+                                            {{.IPAddress}}
+                                        {{else}}
+                                            -
+                                        {{end}}
+                                    </small>
+                                </td>
+                            </tr>
+                            {{end}}
+                        {{else}}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="bi bi-list-ul text-muted" style="font-size: 3rem;"></i>
+                                    <p class="text-muted mt-3">Нет записей в журнале</p>
+                                </td>
+                            </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item disabled">
+                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+            </li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+function applyFilters() {
+    const action = document.getElementById('actionFilter').value;
+    const entity = document.getElementById('entityFilter').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    // In real app, would reload with query parameters
+    showToast('Фильтры применены', 'info');
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+// Set default date range (last 7 days)
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    document.getElementById('dateTo').valueAsDate = today;
+    document.getElementById('dateFrom').valueAsDate = lastWeek;
+});
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

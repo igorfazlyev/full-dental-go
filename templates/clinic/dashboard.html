@@ -1,0 +1,295 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-speedometer2"></i> Личный кабинет клиники
+            </h1>
+            <p class="text-muted">{{.clinic.ClinicName}}</p>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Всего предложений</h6>
+                            <h2 class="mb-0">{{.total_offers}}</h2>
+                        </div>
+                        <div class="text-primary" style="font-size: 2.5rem;">
+                            <i class="bi bi-inbox"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card success shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Принято</h6>
+                            <h2 class="mb-0">{{.accepted_offers}}</h2>
+                        </div>
+                        <div class="text-success" style="font-size: 2.5rem;">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card warning shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">В ожидании</h6>
+                            <h2 class="mb-0">{{.pending_offers}}</h2>
+                        </div>
+                        <div class="text-warning" style="font-size: 2.5rem;">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card info shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Консультации</h6>
+                            <h2 class="mb-0">{{.total_consultations}}</h2>
+                        </div>
+                        <div class="text-info" style="font-size: 2.5rem;">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-start border-success border-4">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-currency-dollar"></i> Потенциальная выручка
+                    </h6>
+                    <h2 class="text-success mb-2">{{formatCurrency .potential_revenue}}</h2>
+                    <p class="text-muted small mb-0">Сумма принятых предложений</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-start border-primary border-4">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-cash-stack"></i> Фактическая выручка
+                    </h6>
+                    <h2 class="text-primary mb-2">{{formatCurrency .actual_revenue}}</h2>
+                    <p class="text-muted small mb-0">
+                        <span class="badge bg-primary">~60%</span> от потенциальной выручки
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="bi bi-lightning-fill text-warning"></i> Быстрые действия
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/clinic/treatment-plans" class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-inbox-fill fs-4 d-block mb-2"></i>
+                                Входящие планы
+                                {{if gt .pending_offers 0}}
+                                <span class="badge bg-danger">{{.pending_offers}}</span>
+                                {{end}}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/clinic/consultations" class="btn btn-success w-100 py-3">
+                                <i class="bi bi-people-fill fs-4 d-block mb-2"></i>
+                                Лиды
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/clinic/analytics" class="btn btn-info w-100 py-3">
+                                <i class="bi bi-graph-up fs-4 d-block mb-2"></i>
+                                Аналитика
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/clinic/price-list" class="btn btn-warning w-100 py-3">
+                                <i class="bi bi-tag-fill fs-4 d-block mb-2"></i>
+                                Прайс-лист
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Последние события
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recentActivity">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Информация о клинике
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Лицензия:</small>
+                        <div><strong>{{.clinic.LicenseNumber}}</strong></div>
+                    </div>
+                    {{if .clinic.Region}}
+                    <div class="mb-3">
+                        <small class="text-muted">Регион:</small>
+                        <div><strong>{{.clinic.Region.Name}}</strong></div>
+                    </div>
+                    {{end}}
+                    <div class="mb-3">
+                        <small class="text-muted">Рейтинг:</small>
+                        <div>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <strong>{{.clinic.Rating}}</strong>
+                            <small class="text-muted">({{.clinic.ReviewCount}} отзывов)</small>
+                        </div>
+                    </div>
+                    {{if .clinic.YearEstablished}}
+                    <div class="mb-3">
+                        <small class="text-muted">Год основания:</small>
+                        <div><strong>{{.clinic.YearEstablished}}</strong></div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-info">
+                <div class="card-body">
+                    <h6 class="text-info">
+                        <i class="bi bi-lightbulb"></i> Совет
+                    </h6>
+                    <p class="small mb-0">
+                        Быстро отвечайте на входящие планы лечения, чтобы повысить конверсию. 
+                        Пациенты выбирают клиники с лучшими условиями и скоростью отклика.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+async function loadRecentActivity() {
+    try {
+        const [offers, consultations] = await Promise.all([
+            API.get('/clinic/offers?limit=5'),
+            API.get('/clinic/consultations?limit=5')
+        ]);
+        
+        const activities = [];
+        
+        offers.slice(0, 3).forEach(offer => {
+            activities.push({
+                icon: 'file-earmark-text',
+                color: offer.status === 'accepted' ? 'success' : 'warning',
+                text: `Предложение для плана #${offer.treatment_plan_id}`,
+                subtext: offer.status === 'accepted' ? 'Принято пациентом' : 'Ожидает ответа',
+                date: offer.created_at
+            });
+        });
+        
+        consultations.slice(0, 3).forEach(consultation => {
+            activities.push({
+                icon: 'calendar-check',
+                color: 'info',
+                text: `Новая консультация`,
+                subtext: consultation.status,
+                date: consultation.created_at
+            });
+        });
+        
+        activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const html = activities.slice(0, 5).map(activity => `
+            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                <div class="text-${activity.color} me-3">
+                    <i class="bi bi-${activity.icon} fs-4"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">${activity.text}</h6>
+                        <small class="text-muted">${formatDate(activity.date)}</small>
+                    </div>
+                    <small class="text-muted">${activity.subtext}</small>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('recentActivity').innerHTML = html || '<p class="text-center text-muted">Нет активности</p>';
+    } catch (error) {
+        document.getElementById('recentActivity').innerHTML = '<p class="text-center text-danger">Ошибка загрузки</p>';
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+document.addEventListener('DOMContentLoaded', loadRecentActivity);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

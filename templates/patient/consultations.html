@@ -1,0 +1,366 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-calendar-check"></i> Мои консультации
+            </h1>
+            <p class="text-muted">Запланированные и завершенные консультации с клиниками</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#requestConsultationModal">
+                <i class="bi bi-plus-circle"></i> Запросить консультацию
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" onclick="filterByStatus('all')">
+                    Все
+                </button>
+                <button type="button" class="btn btn-outline-warning" onclick="filterByStatus('requested')">
+                    Ожидают
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="filterByStatus('scheduled')">
+                    Запланированы
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="filterByStatus('completed')">
+                    Завершены
+                </button>
+                <button type="button" class="btn btn-outline-danger" onclick="filterByStatus('cancelled')">
+                    Отменены
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consultations List -->
+    <div class="row g-4" id="consultationsList">
+        {{if .consultations}}
+            {{range .consultations}}
+            <div class="col-12" data-status="{{.Status}}">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        <i class="bi bi-hospital text-primary" style="font-size: 2.5rem;"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-2">
+                                            {{.Clinic.User.FullName}}
+                                            {{if eq .Status "requested"}}
+                                                <span class="badge bg-warning">Ожидает подтверждения</span>
+                                            {{else if eq .Status "scheduled"}}
+                                                <span class="badge bg-info">Запланирована</span>
+                                            {{else if eq .Status "completed"}}
+                                                <span class="badge bg-success">Завершена</span>
+                                            {{else if eq .Status "cancelled"}}
+                                                <span class="badge bg-danger">Отменена</span>
+                                            {{end}}
+                                        </h5>
+                                        
+                                        {{if .Clinic.Region}}
+                                        <div class="mb-2">
+                                            <i class="bi bi-geo-alt text-muted"></i>
+                                            <small>{{.Clinic.Region.Name}}, {{.Clinic.Region.City}}</small>
+                                        </div>
+                                        {{end}}
+
+                                        {{if .Specialization}}
+                                        <div class="mb-2">
+                                            <i class="bi bi-heart-pulse text-muted"></i>
+                                            <small>{{.Specialization.Name}}</small>
+                                        </div>
+                                        {{end}}
+
+                                        <div class="row g-2 mt-2">
+                                            <div class="col-md-6">
+                                                <div class="small">
+                                                    <i class="bi bi-calendar3 text-muted"></i>
+                                                    <strong>Желаемая дата:</strong>
+                                                    {{if .PreferredDate}}
+                                                        {{formatDateTime .PreferredDate}}
+                                                    {{else}}
+                                                        Не указана
+                                                    {{end}}
+                                                </div>
+                                            </div>
+                                            {{if .ScheduledDate}}
+                                            <div class="col-md-6">
+                                                <div class="small">
+                                                    <i class="bi bi-calendar-check text-success"></i>
+                                                    <strong>Назначено:</strong>
+                                                    {{formatDateTime .ScheduledDate}}
+                                                </div>
+                                            </div>
+                                            {{end}}
+                                        </div>
+
+                                        {{if .ContactMethod}}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="bi bi-telephone"></i> Способ связи: {{.ContactMethod}}
+                                            </small>
+                                        </div>
+                                        {{end}}
+
+                                        {{if .Notes}}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="bi bi-chat-left-text"></i> {{.Notes}}
+                                            </small>
+                                        </div>
+                                        {{end}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <div class="d-grid gap-2">
+                                    {{if eq .Status "scheduled"}}
+                                        <button class="btn btn-sm btn-success" onclick="completeConsultation({{.ID}})">
+                                            <i class="bi bi-check-circle"></i> Отметить завершенной
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="cancelConsultation({{.ID}})">
+                                            <i class="bi bi-x-circle"></i> Отменить
+                                        </button>
+                                    {{else if eq .Status "requested"}}
+                                        <button class="btn btn-sm btn-outline-danger" onclick="cancelConsultation({{.ID}})">
+                                            <i class="bi bi-x-circle"></i> Отменить
+                                        </button>
+                                    {{else if eq .Status "completed"}}
+                                        <a href="/patient/treatment-plans/{{.TreatmentPlanID}}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-clipboard2-pulse"></i> План лечения
+                                        </a>
+                                    {{end}}
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="viewClinicContact({{.Clinic.ID}})">
+                                        <i class="bi bi-telephone"></i> Контакты
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">У вас пока нет консультаций</h4>
+                        <p class="text-muted">Примите предложение от клиники, чтобы записаться на консультацию</p>
+                        <a href="/patient/treatment-plans" class="btn btn-primary mt-3">
+                            <i class="bi bi-clipboard2-pulse"></i> Посмотреть планы лечения
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {{end}}
+    </div>
+</div>
+
+<!-- Request Consultation Modal -->
+<div class="modal fade" id="requestConsultationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-plus"></i> Запросить консультацию
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="requestConsultationForm">
+                    <div class="mb-3">
+                        <label for="consultation_plan_id" class="form-label">План лечения</label>
+                        <select class="form-select" id="consultation_plan_id" required>
+                            <option value="">Выберите план лечения</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="consultation_clinic_id" class="form-label">Клиника</label>
+                        <select class="form-select" id="consultation_clinic_id" required>
+                            <option value="">Выберите клинику</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="consultation_date" class="form-label">Желаемая дата и время</label>
+                        <input type="datetime-local" class="form-control" id="consultation_date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="consultation_contact_method" class="form-label">Предпочтительный способ связи</label>
+                        <select class="form-select" id="consultation_contact_method">
+                            <option value="phone">Телефон</option>
+                            <option value="email">Email</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="telegram">Telegram</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="consultation_notes" class="form-label">Примечания</label>
+                        <textarea class="form-control" id="consultation_notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="submitConsultationRequest()">
+                    <i class="bi bi-send"></i> Отправить запрос
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+function filterByStatus(status) {
+    const consultations = document.querySelectorAll('[data-status]');
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    consultations.forEach(consultation => {
+        const consultationStatus = consultation.getAttribute('data-status');
+        if (status === 'all' || consultationStatus === status) {
+            consultation.style.display = 'block';
+        } else {
+            consultation.style.display = 'none';
+        }
+    });
+}
+
+async function cancelConsultation(consultationId) {
+    if (!confirm('Вы уверены, что хотите отменить эту консультацию?')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        // In real app, would call API to cancel
+        hideLoading();
+        showToast('Консультация отменена', 'success');
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast('Ошибка отмены консультации', 'danger');
+    }
+}
+
+async function completeConsultation(consultationId) {
+    if (!confirm('Отметить консультацию как завершенную?')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        // In real app, would call API
+        hideLoading();
+        showToast('Консультация отмечена как завершенная', 'success');
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast('Ошибка обновления статуса', 'danger');
+    }
+}
+
+function viewClinicContact(clinicId) {
+    showToast('Функция в разработке', 'info');
+}
+
+async function submitConsultationRequest() {
+    const form = document.getElementById('requestConsultationForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const data = {
+        treatment_plan_id: parseInt(document.getElementById('consultation_plan_id').value),
+        clinic_id: parseInt(document.getElementById('consultation_clinic_id').value),
+        preferred_date: new Date(document.getElementById('consultation_date').value).toISOString(),
+        contact_method: document.getElementById('consultation_contact_method').value,
+        notes: document.getElementById('consultation_notes').value
+    };
+    
+    try {
+        showLoading();
+        await API.post('/patient/consultations', data);
+        hideLoading();
+        
+        showToast('Запрос на консультацию отправлен!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('requestConsultationModal')).hide();
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка отправки запроса', 'danger');
+    }
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Load treatment plans for modal
+document.getElementById('requestConsultationModal').addEventListener('show.bs.modal', async function() {
+    try {
+        const plans = await API.get('/patient/treatment-plans');
+        const select = document.getElementById('consultation_plan_id');
+        select.innerHTML = '<option value="">Выберите план лечения</option>';
+        plans.forEach(plan => {
+            const option = document.createElement('option');
+            option.value = plan.id;
+            option.textContent = `План #${plan.id} - ${plan.status}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading plans:', error);
+    }
+});
+
+// Load clinics when plan is selected
+document.getElementById('consultation_plan_id').addEventListener('change', async function() {
+    const planId = this.value;
+    if (!planId) return;
+    
+    try {
+        const plan = await API.get(`/patient/treatment-plans/${planId}`);
+        const select = document.getElementById('consultation_clinic_id');
+        select.innerHTML = '<option value="">Выберите клинику</option>';
+        
+        if (plan.offers) {
+            plan.offers.forEach(offer => {
+                const option = document.createElement('option');
+                option.value = offer.clinic.id;
+                option.textContent = offer.clinic.clinic_name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading clinics:', error);
+    }
+});
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

@@ -1,0 +1,185 @@
+{{define "content"}}
+<div class="container">
+    <div class="row justify-content-center py-5">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">
+                        <i class="bi bi-person-plus text-primary"></i> Регистрация
+                    </h2>
+                    
+                    <div id="alert-container"></div>
+
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Тип аккаунта</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="">Выберите тип аккаунта</option>
+                                <option value="patient">Пациент</option>
+                                <option value="clinic">Клиника</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Полное имя</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="+7-xxx-xxx-xxxx">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                            <div class="form-text">Минимум 6 символов</div>
+                        </div>
+
+                        <div id="clinicFields" style="display:none;">
+                            <hr class="my-4">
+                            <h5 class="mb-3">Информация о клинике</h5>
+                            
+                            <div class="mb-3">
+                                <label for="clinic_name" class="form-label">Название клиники</label>
+                                <input type="text" class="form-control" id="clinic_name" name="clinic_name">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="license_number" class="form-label">Номер лицензии</label>
+                                <input type="text" class="form-control" id="license_number" name="license_number">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="region_id" class="form-label">Регион</label>
+                                <select class="form-select" id="region_id" name="region_id">
+                                    <option value="">Выберите регион</option>
+                                    {{range .regions}}
+                                    <option value="{{.ID}}">{{.Name}}, {{.City}}</option>
+                                    {{end}}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Адрес</label>
+                                <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="year_established" class="form-label">Год основания</label>
+                                <input type="number" class="form-control" id="year_established" name="year_established" min="1900" max="2025">
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-person-plus"></i> Зарегистрироваться
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="mb-0">Уже есть аккаунт? <a href="/login">Войти</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+document.getElementById('role').addEventListener('change', function() {
+    const clinicFields = document.getElementById('clinicFields');
+    if (this.value === 'clinic') {
+        clinicFields.style.display = 'block';
+        document.getElementById('clinic_name').required = true;
+        document.getElementById('license_number').required = true;
+    } else {
+        clinicFields.style.display = 'none';
+        document.getElementById('clinic_name').required = false;
+        document.getElementById('license_number').required = false;
+    }
+});
+
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        full_name: document.getElementById('full_name').value,
+        phone: document.getElementById('phone').value,
+        role: document.getElementById('role').value
+    };
+    
+    if (formData.role === 'clinic') {
+        formData.clinic_name = document.getElementById('clinic_name').value;
+        formData.license_number = document.getElementById('license_number').value;
+        formData.address = document.getElementById('address').value;
+        
+        const regionId = document.getElementById('region_id').value;
+        if (regionId) formData.region_id = parseInt(regionId);
+        
+        const year = document.getElementById('year_established').value;
+        if (year) formData.year_established = parseInt(year);
+    }
+    
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            showAlert('Регистрация успешна! Перенаправление...', 'success');
+            
+            setTimeout(() => {
+                switch(data.user.role) {
+                    case 'patient':
+                        window.location.href = '/patient/dashboard';
+                        break;
+                    case 'clinic':
+                        window.location.href = '/clinic/dashboard';
+                        break;
+                    default:
+                        window.location.href = '/';
+                }
+            }, 1500);
+        } else {
+            showAlert(data.error || 'Ошибка регистрации', 'danger');
+        }
+    } catch (error) {
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+});
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.getElementById('alert-container').appendChild(alertDiv);
+}
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

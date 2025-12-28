@@ -1,0 +1,202 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-geo-alt"></i> Управление регионами
+            </h1>
+            <p class="text-muted">Справочник регионов и городов</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#regionModal">
+                <i class="bi bi-plus-circle"></i> Добавить регион
+            </button>
+        </div>
+    </div>
+
+    <!-- Regions List -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px">ID</th>
+                            <th>Название региона</th>
+                            <th>Город</th>
+                            <th style="width: 120px" class="text-center">Клиник</th>
+                            <th style="width: 150px" class="text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{if .regions}}
+                            {{range .regions}}
+                            <tr data-id="{{.ID}}">
+                                <td><strong>#{{.ID}}</strong></td>
+                                <td><strong>{{.Name}}</strong></td>
+                                <td>{{.City}}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary" id="clinics-count-{{.ID}}">-</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" onclick="editRegion({{.ID}})">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="deleteRegion({{.ID}})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{end}}
+                        {{else}}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+                                    <p class="text-muted mt-3">Нет регионов</p>
+                                </td>
+                            </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Region Modal -->
+<div class="modal fade" id="regionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="regionModalTitle">Добавить регион</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="regionForm">
+                    <input type="hidden" id="region_id">
+                    <div class="mb-3">
+                        <label for="region_name" class="form-label">Название региона</label>
+                        <input type="text" class="form-control" id="region_name" 
+                               placeholder="Например: Центральный район" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="region_city" class="form-label">Город</label>
+                        <input type="text" class="form-control" id="region_city" 
+                               placeholder="Например: Смоленск" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="submitRegion()">
+                    <i class="bi bi-save"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+async function submitRegion() {
+    const form = document.getElementById('regionForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const regionId = document.getElementById('region_id').value;
+    const data = {
+        name: document.getElementById('region_name').value,
+        city: document.getElementById('region_city').value
+    };
+    
+    try {
+        showLoading();
+        if (regionId) {
+            await API.put(`/admin/regions/${regionId}`, data);
+        } else {
+            await API.post('/admin/regions', data);
+        }
+        hideLoading();
+        
+        showToast('Регион успешно сохранен!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('regionModal')).hide();
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка сохранения', 'danger');
+    }
+}
+
+async function editRegion(regionId) {
+    try {
+        showLoading();
+        const region = await API.get(`/admin/regions/${regionId}`);
+        hideLoading();
+        
+        document.getElementById('region_id').value = region.id;
+        document.getElementById('region_name').value = region.name;
+        document.getElementById('region_city').value = region.city;
+        
+        document.getElementById('regionModalTitle').textContent = 'Редактировать регион';
+        const modal = new bootstrap.Modal(document.getElementById('regionModal'));
+        modal.show();
+    } catch (error) {
+        hideLoading();
+        showToast('Ошибка загрузки данных', 'danger');
+    }
+}
+
+async function deleteRegion(regionId) {
+    if (!confirm('Удалить этот регион? Это может повлиять на существующие данные.')) return;
+    
+    try {
+        showLoading();
+        await API.delete(`/admin/regions/${regionId}`);
+        hideLoading();
+        
+        showToast('Регион удален', 'success');
+        setTimeout(() => location.reload(), 1500);
+    } catch (error) {
+        hideLoading();
+        showToast(error.message || 'Ошибка удаления', 'danger');
+    }
+}
+
+// Load clinic counts for each region
+async function loadClinicCounts() {
+    try {
+        const clinics = await API.get('/admin/clinics');
+        const counts = {};
+        
+        clinics.forEach(clinic => {
+            if (clinic.region_id) {
+                counts[clinic.region_id] = (counts[clinic.region_id] || 0) + 1;
+            }
+        });
+        
+        Object.keys(counts).forEach(regionId => {
+            const badge = document.getElementById(`clinics-count-${regionId}`);
+            if (badge) badge.textContent = counts[regionId];
+        });
+    } catch (error) {
+        console.error('Error loading clinic counts:', error);
+    }
+}
+
+// Reset modal on close
+document.getElementById('regionModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('regionForm').reset();
+    document.getElementById('region_id').value = '';
+    document.getElementById('regionModalTitle').textContent = 'Добавить регион';
+});
+
+document.addEventListener('DOMContentLoaded', loadClinicCounts);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

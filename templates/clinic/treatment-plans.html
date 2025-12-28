@@ -1,0 +1,158 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-inbox"></i> Входящие планы лечения
+            </h1>
+            <p class="text-muted">Анонимизированные планы лечения от пациентов</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Специализация</label>
+                    <select class="form-select" id="specializationFilter" onchange="applyFilters()">
+                        <option value="">Все специализации</option>
+                        {{range .specializations}}
+                        <option value="{{.ID}}">{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Стоимость</label>
+                    <select class="form-select" id="priceFilter" onchange="applyFilters()">
+                        <option value="">Любая</option>
+                        <option value="0-50000">До 50 000 ₽</option>
+                        <option value="50000-100000">50 000 - 100 000 ₽</option>
+                        <option value="100000-200000">100 000 - 200 000 ₽</option>
+                        <option value="200000+">Более 200 000 ₽</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Сортировка</label>
+                    <select class="form-select" id="sortFilter" onchange="applyFilters()">
+                        <option value="date_desc">Сначала новые</option>
+                        <option value="date_asc">Сначала старые</option>
+                        <option value="price_asc">По возрастанию цены</option>
+                        <option value="price_desc">По убыванию цены</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                        <i class="bi bi-arrow-clockwise"></i> Сбросить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Treatment Plans List -->
+    <div class="row g-4" id="plansList">
+        {{if .plans}}
+            {{range .plans}}
+            <div class="col-12" data-plan-id="{{.ID}}">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        <i class="bi bi-clipboard2-pulse-fill text-primary" style="font-size: 2.5rem;"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-2">
+                                            План лечения #{{.ID}}
+                                            <span class="badge bg-primary">Новый</span>
+                                        </h5>
+                                        
+                                        <div class="mb-2">
+                                            <i class="bi bi-calendar3 text-muted"></i>
+                                            <small>Создан: {{formatDate .CreatedAt}}</small>
+                                        </div>
+
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-auto">
+                                                <span class="badge bg-light text-dark">
+                                                    <i class="bi bi-list-check"></i> {{len .Items}} процедур
+                                                </span>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="badge bg-light text-dark">
+                                                    <i class="bi bi-currency-exchange"></i> 
+                                                    {{formatCurrency .TotalEstimatedCostMin}} - {{formatCurrency .TotalEstimatedCostMax}}
+                                                </span>
+                                            </div>
+                                            {{if .EstimatedDurationWeeks}}
+                                            <div class="col-auto">
+                                                <span class="badge bg-light text-dark">
+                                                    <i class="bi bi-clock"></i> {{.EstimatedDurationWeeks}} недель
+                                                </span>
+                                            </div>
+                                            {{end}}
+                                        </div>
+
+                                        <!-- Procedures by Specialization -->
+                                        <div class="mb-2">
+                                            <strong>Требуемые специализации:</strong>
+                                            <div class="mt-2">
+                                                {{$specs := dict}}
+                                                {{range .Items}}
+                                                    {{if .Specialization}}
+                                                        {{$_ := set $specs .Specialization.Code .Specialization.Name}}
+                                                    {{end}}
+                                                {{end}}
+                                                {{range $code, $name := $specs}}
+                                                    <span class="badge bg-info me-1">{{$name}}</span>
+                                                {{end}}
+                                            </div>
+                                        </div>
+
+                                        <!-- Sample Items -->
+                                        <div>
+                                            <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#items-{{.ID}}">
+                                                <i class="bi bi-chevron-down"></i> Показать процедуры
+                                            </button>
+                                            <div class="collapse mt-2" id="items-{{.ID}}">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Зуб</th>
+                                                                <th>Диагноз</th>
+                                                                <th>Процедура</th>
+                                                                <th>Специализация</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {{range .Items}}
+                                                            <tr>
+                                                                <td>
+                                                                    {{if .ToothNumber}}
+                                                                        <span class="badge bg-secondary">{{.ToothNumber}}</span>
+                                                                    {{else}}
+                                                                        -
+                                                                    {{end}}
+                                                                </td>
+                                                                <td>{{.Diagnosis}}</td>
+                                                                <td>{{.ProcedureName}}</td>
+                                                                <td>
+                                                                    {{if .Specialization}}
+                                                                        <small>{{.Specialization.Name}}</small>
+                                                                    {{end}}
+                                                                </td>
+                                                            </tr>
+                                                            {{end}}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <button class="btn btn-primary mb

@@ -1,0 +1,428 @@
+{{define "content"}}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">
+                <i class="bi bi-graph-up"></i> Аналитика и контроль
+            </h1>
+            <p class="text-muted">Статистика и финансовые показатели клиники</p>
+        </div>
+        <div class="col-auto">
+            <select class="form-select" id="periodFilter" onchange="loadAnalytics()">
+                <option value="7">Последние 7 дней</option>
+                <option value="30" selected>Последние 30 дней</option>
+                <option value="90">Последние 90 дней</option>
+                <option value="365">Последний год</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Конверсия</h6>
+                            <h3 class="mb-0" id="conversion_rate">0%</h3>
+                        </div>
+                        <div class="text-success" style="font-size: 2rem;">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Принятые / Отправленные</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Средний чек</h6>
+                            <h3 class="mb-0" id="avg_deal">0 ₽</h3>
+                        </div>
+                        <div class="text-primary" style="font-size: 2rem;">
+                            <i class="bi bi-currency-exchange"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">На одно предложение</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Время отклика</h6>
+                            <h3 class="mb-0" id="response_time">0ч</h3>
+                        </div>
+                        <div class="text-info" style="font-size: 2rem;">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Среднее время ответа</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Рейтинг</h6>
+                            <h3 class="mb-0" id="clinic_rating">{{.clinic.Rating}}</h3>
+                        </div>
+                        <div class="text-warning" style="font-size: 2rem;">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Из 5.0 ({{.clinic.ReviewCount}} отзывов)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart"></i> Выручка по периодам
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Статусы предложений
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offers by Specialization -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check"></i> Предложения по специализациям
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Специализация</th>
+                                    <th class="text-center">Отправлено</th>
+                                    <th class="text-center">Принято</th>
+                                    <th class="text-center">Конверсия</th>
+                                    <th class="text-end">Выручка</th>
+                                </tr>
+                            </thead>
+                            <tbody id="specializationStats">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Leads -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Последние лиды
+                    </h5>
+                </div>
+                <div class="card-body" id="recentLeads">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trophy"></i> Топ процедуры
+                    </h5>
+                </div>
+                <div class="card-body" id="topProcedures">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let revenueChart, statusChart;
+
+async function loadAnalytics() {
+    const period = document.getElementById('periodFilter').value;
+    
+    try {
+        const stats = await API.get(`/clinic/dashboard?period=${period}`);
+        
+        // Update key metrics
+        updateMetrics(stats);
+        
+        // Load charts
+        loadRevenueChart(stats);
+        loadStatusChart(stats);
+        
+        // Load tables
+        loadSpecializationStats(stats);
+        loadRecentLeads();
+        loadTopProcedures();
+        
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+        showToast('Ошибка загрузки аналитики', 'danger');
+    }
+}
+
+function updateMetrics(stats) {
+    // Conversion rate
+    const totalOffers = stats.total_offers || 0;
+    const acceptedOffers = stats.accepted_offers || 0;
+    const conversionRate = totalOffers > 0 ? ((acceptedOffers / totalOffers) * 100).toFixed(1) : 0;
+    document.getElementById('conversion_rate').textContent = conversionRate + '%';
+    
+    // Average deal
+    const avgDeal = acceptedOffers > 0 ? (stats.potential_revenue / acceptedOffers) : 0;
+    document.getElementById('avg_deal').textContent = formatCurrency(avgDeal);
+    
+    // Response time (mock data)
+    document.getElementById('response_time').textContent = '2.5ч';
+}
+
+function loadRevenueChart(stats) {
+    const ctx = document.getElementById('revenueChart');
+    
+    // Mock data - in real app would come from API
+    const data = {
+        labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+        datasets: [{
+            label: 'Выручка',
+            data: [120000, 190000, 300000, 250000, 200000, 150000, 180000],
+            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 2,
+            tension: 0.4
+        }]
+    };
+    
+    if (revenueChart) revenueChart.destroy();
+    
+    revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('ru-RU') + ' ₽';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadStatusChart(stats) {
+    const ctx = document.getElementById('statusChart');
+    
+    const data = {
+        labels: ['Принято', 'В ожидании', 'Отклонено'],
+        datasets: [{
+            data: [stats.accepted_offers || 0, stats.pending_offers || 0, 
+                   (stats.total_offers - stats.accepted_offers - stats.pending_offers) || 0],
+            backgroundColor: [
+                'rgba(25, 135, 84, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(108, 117, 125, 0.8)'
+            ],
+            borderWidth: 0
+        }]
+    };
+    
+    if (statusChart) statusChart.destroy();
+    
+    statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function loadSpecializationStats(stats) {
+    // Mock data - would come from API
+    const specializations = [
+        { name: 'Терапия', sent: 15, accepted: 8, revenue: 450000 },
+        { name: 'Ортопедия', sent: 12, accepted: 7, revenue: 820000 },
+        { name: 'Хирургия', sent: 8, accepted: 5, revenue: 380000 },
+        { name: 'Ортодонтия', sent: 10, accepted: 4, revenue: 920000 },
+        { name: 'Имплантология', sent: 6, accepted: 3, revenue: 650000 }
+    ];
+    
+    const html = specializations.map(spec => {
+        const conversion = spec.sent > 0 ? ((spec.accepted / spec.sent) * 100).toFixed(1) : 0;
+        return `
+            <tr>
+                <td><strong>${spec.name}</strong></td>
+                <td class="text-center">${spec.sent}</td>
+                <td class="text-center">
+                    <span class="badge bg-success">${spec.accepted}</span>
+                </td>
+                <td class="text-center">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: ${conversion}%" aria-valuenow="${conversion}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            ${conversion}%
+                        </div>
+                    </div>
+                </td>
+                <td class="text-end"><strong>${formatCurrency(spec.revenue)}</strong></td>
+            </tr>
+        `;
+    }).join('');
+    
+    document.getElementById('specializationStats').innerHTML = html;
+}
+
+async function loadRecentLeads() {
+    try {
+        const consultations = await API.get('/clinic/consultations?limit=5');
+        
+        const html = consultations.slice(0, 5).map(consultation => `
+            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                <div class="me-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px;">
+                        <i class="bi bi-person"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${consultation.patient?.user?.full_name || 'Пациент'}</h6>
+                    <small class="text-muted">
+                        ${consultation.specialization?.name || 'Консультация'}
+                    </small>
+                </div>
+                <div>
+                    ${getStatusBadge(consultation.status)}
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('recentLeads').innerHTML = html || 
+            '<p class="text-center text-muted">Нет лидов</p>';
+    } catch (error) {
+        document.getElementById('recentLeads').innerHTML = 
+            '<p class="text-center text-danger">Ошибка загрузки</p>';
+    }
+}
+
+async function loadTopProcedures() {
+    // Mock data
+    const procedures = [
+        { name: 'Имплантация', count: 8, revenue: 640000 },
+        { name: 'Протезирование', count: 12, revenue: 480000 },
+        { name: 'Лечение кариеса', count: 25, revenue: 375000 },
+        { name: 'Удаление зуба', count: 15, revenue: 120000 },
+        { name: 'Отбеливание', count: 10, revenue: 150000 }
+    ];
+    
+    const html = procedures.map((proc, index) => `
+        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+            <div class="me-3">
+                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" 
+                     style="width: 40px; height: 40px;">
+                    <strong>${index + 1}</strong>
+                </div>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="mb-1">${proc.name}</h6>
+                <small class="text-muted">${proc.count} процедур</small>
+            </div>
+            <div class="text-end">
+                <strong>${formatCurrency(proc.revenue)}</strong>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('topProcedures').innerHTML = html;
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'requested': '<span class="badge bg-warning">Новый</span>',
+        'scheduled': '<span class="badge bg-info">Запланирован</span>',
+        'completed': '<span class="badge bg-success">Завершен</span>',
+        'cancelled': '<span class="badge bg-secondary">Отменен</span>'
+    };
+    return badges[status] || '<span class="badge bg-secondary">' + status + '</span>';
+}
+
+// Load analytics on page load
+document.addEventListener('DOMContentLoaded', loadAnalytics);
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}

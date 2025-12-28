@@ -1,0 +1,232 @@
+{{define "content"}}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="mb-4">
+                        <i class="bi bi-cloud-upload text-primary"></i> Загрузить снимок
+                    </h2>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Поддерживаемые форматы:</strong> DICOM (.dcm), PNG, JPEG
+                        <br>
+                        <strong>Максимальный размер:</strong> 50 МБ
+                    </div>
+
+                    <form id="uploadForm">
+                        <div class="mb-4">
+                            <label for="scan_type" class="form-label">Тип снимка</label>
+                            <select class="form-select" id="scan_type" name="scan_type" required>
+                                <option value="CT">Компьютерная томография (КТ)</option>
+                                <option value="Panoramic">Панорамный снимок</option>
+                                <option value="Periapical">Периапикальный снимок</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Файл снимка</label>
+                            <div class="file-upload-area" id="dropZone">
+                                <i class="bi bi-cloud-arrow-up text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3">Перетащите файл сюда</h5>
+                                <p class="text-muted">или</p>
+                                <input type="file" id="fileInput" class="d-none" accept=".dcm,.png,.jpg,.jpeg" required>
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                    <i class="bi bi-folder2-open"></i> Выбрать файл
+                                </button>
+                            </div>
+                            <div id="fileInfo" class="mt-3 d-none">
+                                <div class="alert alert-success d-flex align-items-center">
+                                    <i class="bi bi-file-earmark-check fs-4 me-3"></i>
+                                    <div class="flex-grow-1">
+                                        <strong id="fileName"></strong>
+                                        <br>
+                                        <small id="fileSize" class="text-muted"></small>
+                                    </div>
+                                    <button type="button" class="btn-close" onclick="clearFile()"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">Примечания (необязательно)</label>
+                            <textarea class="form-control" id="notes" rows="3" placeholder="Опишите ваши симптомы или особенности..."></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1" id="submitBtn">
+                                <i class="bi bi-cloud-upload"></i> Загрузить
+                            </button>
+                            <a href="/patient/scans" class="btn btn-outline-secondary">
+                                Отмена
+                            </a>
+                        </div>
+
+                        <div class="progress mt-3 d-none" id="uploadProgress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle"></i> Как получить снимок?
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-1-circle text-primary"></i> Диагностический центр</h6>
+                            <p class="small text-muted">Посетите любой диагностический центр для получения КТ-снимка полости рта</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-2-circle text-primary"></i> Получите файл</h6>
+                            <p class="small text-muted">Попросите выдать снимок на электронном носителе или по email</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-3-circle text-primary"></i> Загрузите сюда</h6>
+                            <p class="small text-muted">Загрузите файл через эту форму для анализа</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-4-circle text-primary"></i> Получите план</h6>
+                            <p class="small text-muted">ИИ проанализирует снимок и создаст план лечения за несколько минут</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const uploadForm = document.getElementById('uploadForm');
+
+// Drag and drop handlers
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        displayFileInfo(files[0]);
+    }
+});
+
+// File input change
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        displayFileInfo(e.target.files[0]);
+    }
+});
+
+function displayFileInfo(file) {
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = formatFileSize(file.size);
+    fileInfo.classList.remove('d-none');
+}
+
+function clearFile() {
+    fileInput.value = '';
+    fileInfo.classList.add('d-none');
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+// Form submission
+uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const file = fileInput.files[0];
+    if (!file) {
+        showToast('Пожалуйста, выберите файл', 'warning');
+        return;
+    }
+    
+    // Check file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+        showToast('Файл слишком большой. Максимальный размер: 50 МБ', 'danger');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('scan', file);
+    formData.append('scan_type', document.getElementById('scan_type').value);
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = uploadProgress.querySelector('.progress-bar');
+    
+    submitBtn.disabled = true;
+    uploadProgress.classList.remove('d-none');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const xhr = new XMLHttpRequest();
+        
+        // Progress tracking
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                progressBar.style.width = percentComplete + '%';
+            }
+        });
+        
+        // Load complete
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 201) {
+                showToast('Снимок успешно загружен! Начинается обработка...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/patient/scans';
+                }, 2000);
+            } else {
+                const response = JSON.parse(xhr.responseText);
+                showToast(response.error || 'Ошибка загрузки', 'danger');
+                submitBtn.disabled = false;
+                uploadProgress.classList.add('d-none');
+            }
+        });
+        
+        // Error
+        xhr.addEventListener('error', () => {
+            showToast('Ошибка соединения с сервером', 'danger');
+            submitBtn.disabled = false;
+            uploadProgress.classList.add('d-none');
+        });
+        
+        xhr.open('POST', '/api/patient/scans');
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(formData);
+        
+    } catch (error) {
+        showToast('Ошибка загрузки файла', 'danger');
+        submitBtn.disabled = false;
+        uploadProgress.classList.add('d-none');
+    }
+});
+</script>
+{{end}}
+
+{{template "layouts/base.html" .}}
